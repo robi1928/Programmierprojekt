@@ -1,3 +1,35 @@
+Sinn der einzelnen Dateien:
+Frontend/Präsentation
+style.css – globales Design (Farben, Typografie, Abstände, Darkmode)
+
+Login/Session
+login.php – Login-Formular und Authentifizierung.
+logout.php – beendet Session, löscht Tokens.
+auth.php – zentrale Zugriffskontrolle, prüft ob User eingeloggt ist und Rolle stimmt.
+darkmode.php – Umschalten der Theme-Einstellung.
+
+Navigation
+index.php – Einstiegspunkt
+route.php – Routing-Logik, verteilt Anfragen
+
+Dashboards nach Rollen
+dashboard_employee.php – Übersicht für Mitarbeiter
+dashboard_teamlead.php – Teamleiter-Sicht
+dashboard_admin.php – Admin-Sicht
+
+Kernfunktionen
+erfassung.php – Eingabe Maske für Stundenzettel
+freigaben.php – Genehmigung/Ablehnung durch Vorgesetzte
+team_auswertung.php – Auswertung auf Team-Ebene
+auswertung.php – allgemeine oder rollenübergreifende Auswertung.
+system_report.php – technische Reports oder Statusmeldungen (System-Monitoring, Admin).
+users.php – Verwaltung der Benutzer
+
+Datenbank
+db.php – Verbindung zur Datenbank (PDO/MySQLi).
+db.sql – Schema: Tabellen für Rollen, User, Arbeitsorte, Stundenzettel, Einträge.
+
+
 Variablen: 
 Farben
 --bg – Hintergrundfarbe
@@ -28,3 +60,5 @@ Theme (darkmode.php)
 set_theme_from_get(): void, liest ?theme=… aus und speichert es in der Session.
 theme_attr(): string – gibt das data-theme-Attribut fürs <html> zurück.
 theme_nav(): string – erzeugt die Umschalt-Navigation (☀️/🌙).
+
+
