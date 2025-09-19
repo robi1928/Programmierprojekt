@@ -1,0 +1,143 @@
+/* Grundwerte für Farben, Typografie, Abstände */
+:root{
+  --bg:#f9fafb; --fg:#111827; --muted:#6b7280; --border:#e5e7eb;
+  --accent:#2563eb; --accent-strong:#1d4ed8;
+  --radius:12px; --shadow:0 8px 24px rgba(0,0,0,.08); --focus:0 0 0 3px rgba(37,99,235,.35);
+  --font-body:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+  --size:16px; --lh:1.6;
+  color-scheme:light;
+}
+
+/* Auto-Dark, wenn kein data-theme gesetzt ist */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme]){
+    --bg:#0b1220; --fg:#e5e7eb; --muted:#9aa3b2; --border:#1f2937;
+    --accent:#3b82f6; --accent-strong:#2563eb;
+    --shadow:0 8px 24px rgba(0,0,0,.45); --focus:0 0 0 3px rgba(59,130,246,.4);
+    color-scheme:dark;
+  }
+}
+
+/* Erzwungener Light/Dark-Mode über html[data-theme] */
+html[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f9fafb; --fg:#111827; --muted:#6b7280; --border:#e5e7eb;
+  --accent:#2563eb; --accent-strong:#1d4ed8; --shadow:0 8px 24px rgba(0,0,0,.08); --focus:0 0 0 3px rgba(37,99,235,.35);
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b1220; --fg:#e5e7eb; --muted:#9aa3b2; --border:#1f2937;
+  --accent:#3b82f6; --accent-strong:#2563eb; --shadow:0 8px 24px rgba(0,0,0,.45); --focus:0 0 0 3px rgba(59,130,246,.4);
+}
+
+/* Reset und Grundlayout */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; padding:24px;
+  font-family:var(--font-body); font-size:var(--size); line-height:var(--lh);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(37,99,235,.08), transparent 60%),
+    radial-gradient(800px 400px at 120% 10%, rgba(37,99,235,.06), transparent 60%),
+    var(--bg);
+  color:var(--fg);
+}
+body > *{max-width:920px; margin-left:auto; margin-right:auto}
+
+/* Typografie */
+h1{margin:8px 0 16px; font-size:clamp(1.6rem,1.1rem + 2vw,2.4rem); font-weight:800; letter-spacing:-.01em}
+h1 + *{margin-top:10px}
+
+p, ul, nav, form{margin:12px 0 16px}
+
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+
+/*Layout-Helfer*/
+.container{max-width:720px; margin:6vh auto; padding:0 20px}
+.header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px}
+
+@media (max-width:420px){
+  .container{margin:3vh auto}
+  .header{flex-direction:column; align-items:stretch}
+}
+
+/* Weiß-transparentes Panel mit Blur-Effekt */
+.card{
+  background:rgba(255,255,255,.7);
+  backdrop-filter:saturate(140%) blur(6px); -webkit-backdrop-filter:saturate(140%) blur(6px);
+  border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px;
+}
+/* Dark-Mode-Hintergrundvarianten */
+@media (prefers-color-scheme: dark){ :root:not([data-theme]) .card{background:rgba(17,24,39,.6)} }
+html[data-theme="dark"] .card{background:rgba(17,24,39,.6)}
+html[data-theme="light"] .card{background:rgba(255,255,255,.7)}
+
+/* Formulare */
+.form{display:grid; gap:16px}
+.field{display:grid; gap:6px}
+label{font-weight:600}
+input, select {
+  appearance: none;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+input::placeholder{color:var(--muted)}
+input:focus,select:focus{border-color:var(--accent); box-shadow:var(--focus)}
+
+/*Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius);
+  background:transparent; color:var(--fg); cursor:pointer;
+  transition:transform .06s ease, background-color .2s ease, border-color .2s ease;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:var(--accent); color:#fff; border-color:transparent}
+.btn.primary:hover{background:var(--accent-strong)}
+a.btn{display:inline-flex; align-items:center; justify-content:center; text-decoration:none}
+
+/* Navigation Buttonms */
+nav{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+nav a:not(.theme-icon):not(.btn){
+  padding:6px 10px; border:1px solid var(--border); border-radius:10px;
+  background:rgba(255,255,255,.6);
+}
+
+/* Dark-Mode-Hintergrund für Navigation */
+@media (prefers-color-scheme: dark){ :root:not([data-theme]) nav a:not(.theme-icon):not(.btn){background:rgba(17,24,39,.5)} }
+html[data-theme="dark"] nav a:not(.theme-icon):not(.btn){background:rgba(17,24,39,.5)}
+
+/* Listen */
+ul{padding-left:1.2rem}
+ul li{margin:6px 0}
+
+/* Darkmode Toggle */
+.theme-switch{
+  position:fixed; top:12px; right:12px; z-index:1000;
+  display:flex; gap:8px;
+}
+.theme-icon{
+  width:36px; height:36px; border-radius:9999px;
+  display:inline-flex; align-items:center; justify-content:center;
+  text-decoration:none; border:1px solid var(--border);
+  background:rgba(255,255,255,.7); color:var(--fg); box-shadow:var(--shadow);
+  transition:transform .06s ease, background-color .2s ease, border-color .2s ease;
+}
+.theme-icon:hover{transform:translateY(-1px)}
+.theme-icon:active{transform:translateY(0)}
+/* Dark-Mode-Hintergrund für Theme-Icons */
+@media (prefers-color-scheme: dark){ :root:not([data-theme]) .theme-icon{background:rgba(17,24,39,.6)} }
+html[data-theme="dark"] .theme-icon{background:rgba(17,24,39,.6)}
+.theme-icon.active{box-shadow:var(--focus)}
+
+/* Fokus-Style für Tastatur-Nutzer */
+:focus-visible{outline:none; box-shadow:var(--focus)}
