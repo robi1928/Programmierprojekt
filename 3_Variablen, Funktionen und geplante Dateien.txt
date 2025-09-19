@@ -1,0 +1,30 @@
+Variablen: 
+Farben
+--bg – Hintergrundfarbe
+--fg – Textfarbe (Vordergrund)
+--muted – abgeschwächte Textfarbe (z. B. Placeholder, Sekundärtexte)
+--border – Rahmenfarbe (Inputs, Buttons, Cards)
+--accent – Haupt-Akzentfarbe (z. B. Links, primäre Buttons)
+--accent-strong – kräftigere Variante für Hover oder aktive Zustände
+
+Effekte & Layout
+--radius – Standard-Eckenradius für UI-Elemente
+--shadow – Schattenwurf für Karten, Buttons etc
+--focus – Fokusmarkierung
+
+Typografie
+--font-body – Schriftfamilie für Fließtext
+--size – Standard-Schriftgröße
+--lh – Zeilenhöhe
+
+
+Funktionen:
+Authentifizierung (auth.php)
+current_user(): ?array – liefert den eingeloggten User aus der Session oder null.
+require_login(): void – zwingt zum Login, sonst Redirect auf index.php.
+require_role(string $role): void – zwingt zum Login und zur passenden Rolle, sonst Redirect auf route.php.
+
+Theme (darkmode.php)
+set_theme_from_get(): void, liest ?theme=… aus und speichert es in der Session.
+theme_attr(): string – gibt das data-theme-Attribut fürs <html> zurück.
+theme_nav(): string – erzeugt die Umschalt-Navigation (☀️/🌙).
