@@ -5,11 +5,12 @@ $dsn  = 'mysql:host=localhost;dbname=db;charset=utf8mb4';
 $user = 'root';
 $pass = ''; // XAMPP-Standard: root ohne Passwort. Abklären, ob das ohne Passwort bleiben kann weil ja eigentlich nur eine Studienleistung und keine wirkliche Seite.
 
-// Stellt die Verbindung zur Datenbank mit PDO (PHP Data Obbjects) her.
-// Optionen:
-// - ERRMODE_EXCEPTION → Fehler lösen eine Exception aus
-// - FETCH_ASSOC → Abfragen geben Arrays mit Spaltennamen zurück
+// Stellt eine Verbindung zur Datenbank über PDO (PHP Data Objects) her.
+// Verwendete Optionen:
+// - ERRMODE_EXCEPTION → Fehler lösen eine Exception aus (statt still protokolliert zu werden)
+// - FETCH_ASSOC → Ergebnisse werden als Array mit Spaltennamen als Schlüssel zurückgegeben
 $pdo = new PDO($dsn, $user, $pass, [
   PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
   PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ]);
+
