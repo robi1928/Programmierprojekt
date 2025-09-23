@@ -32,22 +32,22 @@ db.sql – Schema: Tabellen für Rollen, User, Arbeitsorte, Stundenzettel, Eintr
 
 Variablen: 
 Farben
---bg – Hintergrundfarbe
---fg – Textfarbe (Vordergrund)
---muted – abgeschwächte Textfarbe (z. B. Placeholder, Sekundärtexte)
---border – Rahmenfarbe (Inputs, Buttons, Cards)
---accent – Haupt-Akzentfarbe (z. B. Links, primäre Buttons)
---accent-strong – kräftigere Variante für Hover oder aktive Zustände
+--hintergrund – Hintergrundfarbe
+--vordergrund – Textfarbe (Vordergrund)
+--text-gedämpft – abgeschwächte Textfarbe (z. B. Placeholder, Sekundärtexte)
+--rahmen – Rahmenfarbe (Inputs, Buttons, Cards)
+--akzent – Haupt-Akzentfarbe (z. B. Links, primäre Buttons)
+--akzent-stark – kräftigere Variante für Hover oder aktive Zustände
 
 Effekte & Layout
 --radius – Standard-Eckenradius für UI-Elemente
---shadow – Schattenwurf für Karten, Buttons etc
---focus – Fokusmarkierung
+--schatten – Schattenwurf für Karten, Buttons etc.
+--fokus – Fokusmarkierung
 
 Typografie
---font-body – Schriftfamilie für Fließtext
---size – Standard-Schriftgröße
---lh – Zeilenhöhe
+--schrift-familie – Schriftfamilie für Fließtext
+--schrift-groesse – Standard-Schriftgröße
+--zeilenhoehe – Zeilenhöhe
 
 
 Funktionen:
