@@ -30,7 +30,7 @@ db.php – Verbindung zur Datenbank (PDO/MySQLi).
 db.sql – Schema: Tabellen für Rollen, User, Arbeitsorte, Stundenzettel, Einträge.
 
 
-Variablen: 
+CSS Variablen: 
 Farben
 --hintergrund – Hintergrundfarbe
 --vordergrund – Textfarbe (Vordergrund)
