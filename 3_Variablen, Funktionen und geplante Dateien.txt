@@ -52,13 +52,16 @@ Typografie
 
 Funktionen:
 Authentifizierung (auth.php)
-current_user(): ?array – liefert den eingeloggten User aus der Session oder null.
-require_login(): void – zwingt zum Login, sonst Redirect auf index.php.
-require_role(string $role): void – zwingt zum Login und zur passenden Rolle, sonst Redirect auf route.php.
+aktueller_benutzer(): ?array – liefert den eingeloggten Benutzer aus der Session oder null.
+login_erforderlich(): void – erzwingt Login, sonst Redirect auf index.php.
+rolle_erforderlich(string $rolle): void – erzwingt Login und passende Rolle, sonst Redirect auf route.php.
 
-Theme (darkmode.php)
-set_theme_from_get(): void, liest ?theme=… aus und speichert es in der Session.
-theme_attr(): string – gibt das data-theme-Attribut fürs <html> zurück.
-theme_nav(): string – erzeugt die Umschalt-Navigation (☀️/🌙).
+Darstellungsmodus (darkmode.php)
+modus_aus_url_setzen(): void – liest ?modus=… (hell/dunkel/auto) aus und speichert in der Session.
+html_modus_attribut(): string – gibt das data-theme-Attribut fürs <html> zurück.
+modus_navigation(): string – erzeugt die Umschalt-Navigation (☀️/🌙).
 
-
+Rollen-Konstanten (auth.php)
+ROLLE_MITARBEITER = 'mitarbeiter'
+ROLLE_TEAMLEITUNG = 'teamleitung'
+ROLLE_ADMIN = 'admin'
