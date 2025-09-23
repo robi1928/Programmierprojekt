@@ -1,3 +1,4 @@
+<!-- Logik von Stackoverflow. Selber angepasst -->
 <?php
 require_once 'auth.php';
 login_erforderlich();
