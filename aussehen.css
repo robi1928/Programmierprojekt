@@ -1,3 +1,4 @@
+/* selber geschrieben, Grundkonzept aus anderem Projekt */
 /* Grundwerte für Farben, Typografie, Abstände */
 :root{
   --hintergrund:#f9fafb; --vordergrund:#111827; --text-gedämpft:#6b7280; --rahmen:#e5e7eb;
@@ -141,3 +142,4 @@ html[data-theme="dark"] .theme-icon{background:rgba(17,24,39,.6)}
 
 /* Fokus-Style für Tastatur-Nutzer */
 :focus-visible{outline:none; box-shadow:var(--fokus)}
+
