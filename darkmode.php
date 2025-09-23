@@ -1,3 +1,4 @@
+<!-- Selber geschrieben, bzw kopiert aus anderem Projekt. Aria label erstmal übernommen. Am Ende schauen, ob Barrierefreiheit übernommen wird -->
 <?php
 // Nach session_start() einbinden
 
@@ -31,3 +32,4 @@ function modus_navigation(): string {
     <a class="modus-icon' . ($aktuellerModus === 'dunkel' ? ' active' : '') . '" href="?modus=dunkel" title="dunkel" aria-label="dunkel">🌙</a>
   </div>';
 }
+
