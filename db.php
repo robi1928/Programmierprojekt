@@ -1,3 +1,4 @@
+<!-- vorlage von heimann kopiert und selber angepasst. catch am Ende weggelassen, hat auch ohne funktioniert. Nochmal recherchieren, evtl sinnvoll -->
 <?php
 // Datenbank-Verbindungszeichenkette
 $dsn  = 'mysql:host=localhost;dbname=db;charset=utf8mb4';
@@ -13,3 +14,4 @@ $pdo = new PDO($dsn, $user, $pass, [
   PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
   PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ]);
+
