@@ -1,3 +1,4 @@
+<!-- Standardseite, noch ohne Inhalt. Selber geschrieben -->
 <?php
 require_once 'auth.php';
 modus_aus_url_setzen();
