@@ -3,7 +3,8 @@
 -- 2. Datenbank "db" anlegen
 -- 3. db.sql importieren
 
--- Falls Tabellen schon existieren → löschen (Reihenfolge wegen Fremdschlüsseln wichtig)
+-- Grundgerüst kopiert von Dr. Heimann. Erweitert mit maria.db, Fehlerkorrekturen mit ChatGTP
+-- Falls Tabellen schon existieren → löschen (Reihenfolge wegen Fremdschlüsseln wichtig (Fehler im Heimann Code))
 DROP TABLE IF EXISTS zeiteintraege;
 DROP TABLE IF EXISTS urlaubsantraege;
 DROP TABLE IF EXISTS urlaubskonten;
@@ -17,7 +18,7 @@ DROP TABLE IF EXISTS rollen;
 CREATE TABLE rollen (
   rollen_id       TINYINT PRIMARY KEY,
   rollen_schluessel ENUM('mitarbeiter','teamleitung','admin') NOT NULL UNIQUE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; -- nicht in Vorlage von Heimann. Eingebaut, damit wirklich alle Zeichen möglich. Überlegen, ob als Datenbank default setzen (spart wahrscheinlich Zeilen)
 
 INSERT INTO rollen(rollen_id, rollen_schluessel) VALUES
   (1,'mitarbeiter'),(2,'teamleitung'),(3,'admin');
@@ -28,7 +29,7 @@ CREATE TABLE benutzer (
   vorname         VARCHAR(100) NOT NULL,
   nachname        VARCHAR(100) NOT NULL,
   email           VARCHAR(255) NOT NULL UNIQUE,
-  rollen_id       TINYINT NOT NULL, -- Verknüpfung zu rollen
+  rollen_id       TINYINT NOT NULL,
   aktiv           TINYINT(1) NOT NULL DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
   erstellt_am     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   aktualisiert_am TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -56,7 +57,7 @@ CREATE TABLE stundenzettel (
   stundenzettel_id INT PRIMARY KEY AUTO_INCREMENT,
   benutzer_id      INT NOT NULL,
   monat            TINYINT  NOT NULL CHECK (monat BETWEEN 1 AND 12),
-  jahr             SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2100),
+  jahr             SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2100), -- check sicherte Wertebereich
   status           ENUM('entwurf','eingereicht','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
   eingereicht_am   DATETIME NULL,
   genehmigt_von    INT NULL,
@@ -70,8 +71,8 @@ CREATE TABLE stundenzettel (
   urlaub_unbezahlt DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   urlaub_sonder    DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   urlaub_gesamt    DECIMAL(5,2) AS (urlaub_bezahlt + urlaub_unbezahlt + urlaub_sonder) STORED,
-  UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr),
-  FOREIGN KEY (benutzer_id)   REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
+  UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr), -- verhindert doppelte Einträge
+  FOREIGN KEY (benutzer_id)   REFERENCES benutzer(benutzer_id) ON DELETE CASCADE, --entfernt beim löschen abhängige Datensätze
   FOREIGN KEY (genehmigt_von) REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -101,7 +102,7 @@ INSERT INTO urlaubsarten(urlaubsart_id, art_schluessel, beschreibung) VALUES
 
 -- Urlaubskonten (jährlicher Anspruch pro Benutzer)
 CREATE TABLE urlaubskonten (
-  konto_id       INT PRIMARY KEY AUTO_INCREMENT,
+  konto_id       INT PRIMARY KEY AUTO_INCREMENT,--automatisch +1
   benutzer_id    INT NOT NULL,
   jahr           SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2100),
   anspruch_tage  DECIMAL(5,2) NOT NULL,
@@ -131,3 +132,4 @@ CREATE TABLE urlaubsantraege (
   FOREIGN KEY (urlaubsart_id)   REFERENCES urlaubsarten(urlaubsart_id),
   FOREIGN KEY (entschieden_von) REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
