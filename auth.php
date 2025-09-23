@@ -1,3 +1,4 @@
+<!-- Entwurf selber gemacht, hat aber nicht so funktioniert. Verbessert mit ChatGTP -->
 <?php
 session_start();
 
