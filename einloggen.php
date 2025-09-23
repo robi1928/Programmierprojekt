@@ -1,3 +1,4 @@
+<!-- Grundgerüst selber geschrieben (mit Stackoverflow). Fehlerkorrekturen mit ChatGTP-->
 <?php
 // Optionale Sicherheitseinstellungen für Session-Cookies
 ini_set('session.cookie_httponly','1'); // Cookies nur für HTTP, nicht für JavaScript
