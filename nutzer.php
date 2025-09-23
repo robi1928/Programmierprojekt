@@ -1,14 +1,14 @@
 <?php
 require_once 'auth.php';
-// ggf. require_once 'darkmode.php'; // nur falls nicht bereits eingebunden
 rolle_erforderlich(ROLLE_ADMIN);
 modus_aus_url_setzen();
 
-/* -------------- DB-Logik vorerst auskommentiert -----------------
-
+// Auskommentiert, weil die Verbindung zur Datenbank noch nicht steht
+/* //ChatGPT
 // Verbindung zur Datenbank (anpassen!)
 $pdo = new PDO("mysql:host=localhost;dbname=deine_db;charset=utf8", "dein_user", "dein_pass");
 
+// Eingaben aus dem Formular holen
 // Eingaben abholen
 $name               = trim($_POST['name'] ?? '');
 $vorname            = trim($_POST['vorname'] ?? '');
@@ -29,7 +29,8 @@ if (!preg_match("/^[A-Za-zÄÖÜäöüß-]+$/u", $vorname)) {
     $fehler[] = "Vorname darf nur Buchstaben und Bindestrich enthalten.";
 }
 
-// Rolle prüfen: muss eine der bekannten Rollen sein
+// Rolle prüfen
+//Keine Prüfung da Listenauswahl
 $zulaessigeRollen = ['mitarbeiter','teamleitung','admin'];
 if (!in_array($rolle, $zulaessigeRollen, true)) {
     $fehler[] = "Ungültige Rolle.";
@@ -69,7 +70,7 @@ if (!empty($fehler)) {
     exit;
 }
 
-// In DB speichern (Tabellen-/Spaltennamen bei Bedarf anpassen)
+// In DB speichern (anpassen!)
 $stmt = $pdo->prepare("
     INSERT INTO users (name, vorname, rolle, wochenstunden, urlaubstage, einstellungsdatum)
     VALUES (:name, :vorname, :rolle, :wochenstunden, :urlaubstage, :einstellungsdatum)
@@ -83,8 +84,8 @@ $stmt->execute([
     ':einstellungsdatum' => $einstellungsdatum
 ]);
 
-echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>";
-// ---------------------------------------------------------------- */
+echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>"; */
+
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
@@ -99,7 +100,7 @@ echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>";
     <a href="route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
-
+    <!-- ChatGTP -->
   <form action="insert_user.php" method="post">
     <!-- Name -->
     <label for="name">Name</label>
