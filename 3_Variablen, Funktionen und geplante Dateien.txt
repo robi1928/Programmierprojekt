@@ -1,10 +1,10 @@
 Sinn der einzelnen Dateien:
 Frontend/Präsentation
-style.css – globales Design (Farben, Typografie, Abstände, Darkmode)
+aussehen.css – globales Design (Farben, Typografie, Abstände, Darkmode)
 
 Login/Session
-login.php – Login-Formular und Authentifizierung.
-logout.php – beendet Session, löscht Tokens.
+einloggen.php – Login-Formular und Authentifizierung.
+ausloggen.php – beendet Session, löscht Tokens.
 auth.php – zentrale Zugriffskontrolle, prüft ob User eingeloggt ist und Rolle stimmt.
 darkmode.php – Umschalten der Theme-Einstellung.
 
@@ -13,9 +13,9 @@ index.php – Einstiegspunkt
 route.php – Routing-Logik, verteilt Anfragen
 
 Dashboards nach Rollen
-dashboard_employee.php – Übersicht für Mitarbeiter
-dashboard_teamlead.php – Teamleiter-Sicht
-dashboard_admin.php – Admin-Sicht
+hauptmenu_mitarbeiter.php – Übersicht für Mitarbeiter
+hauptmenu_teamleitung.php – Teamleiter-Sicht
+hauptmenu_admin.php – Admin-Sicht
 
 Kernfunktionen
 erfassung.php – Eingabe Maske für Stundenzettel
@@ -23,7 +23,7 @@ freigaben.php – Genehmigung/Ablehnung durch Vorgesetzte
 team_auswertung.php – Auswertung auf Team-Ebene
 auswertung.php – allgemeine oder rollenübergreifende Auswertung.
 system_report.php – technische Reports oder Statusmeldungen (System-Monitoring, Admin).
-users.php – Verwaltung der Benutzer
+nutzer.php – Verwaltung der Benutzer
 
 Datenbank
 db.php – Verbindung zur Datenbank (PDO/MySQLi).
