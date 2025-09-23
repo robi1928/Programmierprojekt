@@ -1,3 +1,4 @@
+<!-- selber geschrieben mit etwas recherche -->
 <?php
 session_start();
 
@@ -7,4 +8,5 @@ session_destroy();
 
 // Zurück zur Login-Seite
 header('Location: index.php');
+
 exit;
