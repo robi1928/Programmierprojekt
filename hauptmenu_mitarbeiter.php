@@ -1,3 +1,4 @@
+<!-- Standardseite, noch ohne Inhalt. Selber geschrieben -->
 <?php
 require_once 'auth.php';
 rolle_erforderlich(ROLLE_MITARBEITER);
