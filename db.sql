@@ -72,7 +72,7 @@ CREATE TABLE stundenzettel (
   urlaub_sonder    DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   urlaub_gesamt    DECIMAL(5,2) AS (urlaub_bezahlt + urlaub_unbezahlt + urlaub_sonder) STORED,
   UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr), -- verhindert doppelte Einträge
-  FOREIGN KEY (benutzer_id)   REFERENCES benutzer(benutzer_id) ON DELETE CASCADE, --entfernt beim löschen abhängige Datensätze
+  FOREIGN KEY (benutzer_id)   REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
   FOREIGN KEY (genehmigt_von) REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -132,4 +132,5 @@ CREATE TABLE urlaubsantraege (
   FOREIGN KEY (urlaubsart_id)   REFERENCES urlaubsarten(urlaubsart_id),
   FOREIGN KEY (entschieden_von) REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
