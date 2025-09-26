@@ -20,7 +20,18 @@ $benutzer = aktueller_benutzer();
     <?= modus_navigation() ?>
   </nav>
   <ul>
-    <li><a href="system_report.php">Systemreport</a></li>
+    <!--Liste aller Geschäftsvorfälle, die ein Admin/Projektleiter ausführen darf-->
+    <li>
+      <!--Dashboard fehlt-->
+      <a href="system_report.php">Systemreport</a>
+      <a href="erfassung.php">Arbeitszeit erfassen</a>
+      <a href="freigeben">Arbeitszeiten freigeben</a>
+      <a href="team_auswertung.php">Team-Auswertung</a>
+      <a href="freigeben.php">Arbeitszeiten freigeben</a>
+      <!--Daten exportieren fehlt-->
+      <a href="nutzer">Nutzer anlegen</a>
+    </li>
   </ul>
+  
 </body>
 </html>

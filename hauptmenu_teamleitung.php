@@ -20,8 +20,10 @@ $benutzer = aktueller_benutzer();
     <?= modus_navigation() ?>
   </nav>
   <ul>
+    <!--Dashboard fehlt-->
     <li><a href="team_auswertung.php">Team-Auswertung</a></li>
-    <li><a href="freigaben.php">Freigaben</a></li>
+    <li><a href="freigaben.php">Arbeitszeiten freigaben</a></li>
+    <li><a href="nutzer">Nutzer anlegen</a></li>
   </ul>
 </body>
 </html>
