@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS urlaubsantraege;
 DROP TABLE IF EXISTS urlaubskonten;
 DROP TABLE IF EXISTS urlaubsarten;
 DROP TABLE IF EXISTS stundenzettel;
+-- ARBEITSORTE RAUS?
 DROP TABLE IF EXISTS arbeitsorte;
 DROP TABLE IF EXISTS benutzer;
 DROP TABLE IF EXISTS rollen;
@@ -30,6 +31,9 @@ CREATE TABLE benutzer (
   nachname        VARCHAR(100) NOT NULL,
   email           VARCHAR(255) NOT NULL UNIQUE,
   rollen_id       TINYINT NOT NULL,
+  -- Wochenstunden_raw
+  -- Urlaubstage
+  -- Einstellungsdatum
   aktiv           TINYINT(1) NOT NULL DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
   erstellt_am     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   aktualisiert_am TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -43,12 +47,15 @@ INSERT INTO benutzer(vorname,nachname,email,rollen_id) VALUES
   ('Lena','Deiters','teamleitung@example.com',2),
   ('Frida','Schoppen','admin@example.com',3);
 
+
+-- DIESER BLOCK KANN RAUS?
 -- Arbeitsorte (Dropdown-Auswahl, optional)
 CREATE TABLE arbeitsorte (
   ort_id      TINYINT PRIMARY KEY,
   bezeichnung VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- DIESER BLOCK KANN RAUS?
 INSERT INTO arbeitsorte(ort_id,bezeichnung) VALUES
   (0,'k. A.'),(1,'Zu Hause'),(2,'Beim Kunden'),(3,'Im Büro');
 
