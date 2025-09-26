@@ -4,15 +4,16 @@ rolle_erforderlich(ROLLE_ADMIN);
 modus_aus_url_setzen();
 
 // Auskommentiert, weil die Verbindung zur Datenbank noch nicht steht
-/* //ChatGPT
+//ChatGPT
 // Verbindung zur Datenbank (anpassen!)
-$pdo = new PDO("mysql:host=localhost;dbname=deine_db;charset=utf8", "dein_user", "dein_pass");
+ $pdo = new PDO("mysql:host=localhost;dbname=db;charset=utf8mb4", "root", "");
 
 // Eingaben aus dem Formular holen
 // Eingaben abholen
-$name               = trim($_POST['name'] ?? '');
+$nachname           = trim($_POST['name'] ?? '');
 $vorname            = trim($_POST['vorname'] ?? '');
-$rolle              = $_POST['rolle'] ?? '';
+$email              = trim($_POST['email']);
+$rollen_id          = $_POST['rolle'] ?? '';
 $wochenstunden_raw  = $_POST['wochenstunden'] ?? '';
 $urlaubstage        = (int)($_POST['urlaubstage'] ?? 0);
 $einstellungsdatum  = $_POST['einstellungsdatum'] ?? '';
@@ -20,7 +21,7 @@ $einstellungsdatum  = $_POST['einstellungsdatum'] ?? '';
 $fehler = [];
 
 // Name prüfen: nur Buchstaben
-if (!preg_match("/^[A-Za-zÄÖÜäöüß-]+$/u", $name)) {
+if (!preg_match("/^[A-Za-zÄÖÜäöüß-]+$/u", $nachname)) {
     $fehler[] = "Name darf nur Buchstaben und Bindestrich enthalten.";
 }
 
@@ -29,13 +30,19 @@ if (!preg_match("/^[A-Za-zÄÖÜäöüß-]+$/u", $vorname)) {
     $fehler[] = "Vorname darf nur Buchstaben und Bindestrich enthalten.";
 }
 
+//E-Mail-Adresse prüfen: gemäß Filter
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = "Ungültige E-Mail-Adresse.";
+}
 // Rolle prüfen
-//Keine Prüfung da Listenauswahl
+//Keine Prüfung notwendig da Listenauswahl
 $zulaessigeRollen = ['mitarbeiter','teamleitung','admin'];
-if (!in_array($rolle, $zulaessigeRollen, true)) {
+if (!in_array($rollen_id, $zulaessigeRollen, true)) {
     $fehler[] = "Ungültige Rolle.";
 }
 
+// Block auskommentiert, weil die db die Daten noch nicht erfassen kann.
+/*
 // Wochenstunden prüfen: 0 < x < 42, max. 1 Nachkommastelle, akzeptiert Komma oder Punkt
 $ws_norm = str_replace(',', '.', trim($wochenstunden_raw));
 if (!preg_match("/^\d+(\.\d)?$/", $ws_norm)) {
@@ -55,6 +62,7 @@ if ($urlaubstage <= 0 || $urlaubstage >= 30) {
 $minDate = strtotime("2000-01-01");
 $maxDate = strtotime("+30 days");
 $ts = strtotime($einstellungsdatum);
+*/
 
 if ($ts === false) {
     $fehler[] = "Ungültiges Einstellungsdatum.";
@@ -72,19 +80,19 @@ if (!empty($fehler)) {
 
 // In DB speichern (anpassen!)
 $stmt = $pdo->prepare("
-    INSERT INTO users (name, vorname, rolle, wochenstunden, urlaubstage, einstellungsdatum)
+    INSERT INTO benutzer (name, vorname, rolle, wochenstunden, urlaubstage, einstellungsdatum)
     VALUES (:name, :vorname, :rolle, :wochenstunden, :urlaubstage, :einstellungsdatum)
 ");
 $stmt->execute([
-    ':name'              => $name,
+    ':name'              => $nachname,
     ':vorname'           => $vorname,
-    ':rolle'             => $rolle,
+    ':rolle'             => $rollen_id,
     ':wochenstunden'     => $wochenstunden,
     ':urlaubstage'       => $urlaubstage,
     ':einstellungsdatum' => $einstellungsdatum
 ]);
 
-echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>"; */
+echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>"; 
 
 ?>
 <!doctype html>
@@ -101,14 +109,19 @@ echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>"; */
     <?= modus_navigation() ?>
   </nav>
     <!-- ChatGTP -->
-  <form action="insert_user.php" method="post">
+  <form action="insert_user.php" method="post"><br>
     <!-- Name -->
     <label for="name">Name</label>
-    <input type="text" id="name" name="name" required>
+    <input type="text" id="name" name="name" required><br>
 
     <!-- Vorname -->
     <label for="vorname">Vorname</label>
-    <input type="text" id="vorname" name="vorname" required>
+    <input type="text" id="vorname" name="vorname" required><br>
+
+
+    <!-- E-Mail -->
+    <label for="email">E-Mail:</label>
+    <input type="email" id="email" name="email" required><br>
 
     <!-- Rolle -->
     <label for="rolle">Rolle</label>
@@ -117,19 +130,19 @@ echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>"; */
         <option value="mitarbeiter">Mitarbeiter</option>
         <option value="teamleitung">Teamleitung</option>
         <option value="admin">Admin</option>
-    </select>
+    </select><br>
 
     <!-- Wochenstunden -->
     <label for="wochenstunden">Regelmäßige Wochenstunden</label>
-    <input type="number" step="0.1" id="wochenstunden" name="wochenstunden" inputmode="decimal" required>
+    <input type="number" step="0.1" id="wochenstunden" name="wochenstunden" inputmode="decimal" required><br>
 
     <!-- Urlaubstage -->
     <label for="urlaubstage">Urlaubstage</label>
-    <input type="number" id="urlaubstage" name="urlaubstage" min="1" max="29" required>
+    <input type="number" id="urlaubstage" name="urlaubstage" min="1" max="29" required><br>
 
     <!-- Einstellungsdatum -->
     <label for="einstellungsdatum">Einstellungsdatum</label>
-    <input type="date" id="einstellungsdatum" name="einstellungsdatum" required>
+    <input type="date" id="einstellungsdatum" name="einstellungsdatum" required><br>
 
     <!-- Buttons -->
     <button type="submit">Speichern</button>
