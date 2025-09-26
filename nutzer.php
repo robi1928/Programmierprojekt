@@ -8,8 +8,13 @@ modus_aus_url_setzen();
 // Verbindung zur Datenbank (anpassen!)
  $pdo = new PDO("mysql:host=localhost;dbname=db;charset=utf8mb4", "root", "");
 
-// Eingaben aus dem Formular holen
-// Eingaben abholen
+ // Variablen vorbereiten
+$fehler = [];
+$erfolg = "";
+
+// Nur prüfen, wenn Formular abgesendet wurde 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
+// Eingaben abholen  
 $nachname           = trim($_POST['name'] ?? '');
 $vorname            = trim($_POST['vorname'] ?? '');
 $email              = trim($_POST['email']);
@@ -18,7 +23,7 @@ $wochenstunden_raw  = $_POST['wochenstunden'] ?? '';
 $urlaubstage        = (int)($_POST['urlaubstage'] ?? 0);
 $einstellungsdatum  = $_POST['einstellungsdatum'] ?? '';
 
-$fehler = [];
+
 
 // Name prüfen: nur Buchstaben
 if (!preg_match("/^[A-Za-zÄÖÜäöüß-]+$/u", $nachname)) {
@@ -41,8 +46,6 @@ if (!in_array($rollen_id, $zulaessigeRollen, true)) {
     $fehler[] = "Ungültige Rolle.";
 }
 
-// Block auskommentiert, weil die db die Daten noch nicht erfassen kann.
-/*
 // Wochenstunden prüfen: 0 < x < 42, max. 1 Nachkommastelle, akzeptiert Komma oder Punkt
 $ws_norm = str_replace(',', '.', trim($wochenstunden_raw));
 if (!preg_match("/^\d+(\.\d)?$/", $ws_norm)) {
@@ -53,16 +56,16 @@ if ($wochenstunden <= 0 || $wochenstunden >= 42) {
     $fehler[] = "Wochenstunden müssen zwischen 0 und 42 liegen.";
 }
 
-// Urlaubstage prüfen: 1–29
+// Urlaubstage prüfen: 1–30
 if ($urlaubstage <= 0 || $urlaubstage >= 30) {
-    $fehler[] = "Urlaubstage müssen zwischen 1 und 29 liegen.";
+    $fehler[] = "Urlaubstage müssen zwischen 1 und 30 liegen.";
 }
 
 // Einstellungsdatum prüfen: 01.01.2000 < Datum < heute + 30 Tage
 $minDate = strtotime("2000-01-01");
 $maxDate = strtotime("+30 days");
 $ts = strtotime($einstellungsdatum);
-*/
+
 
 if ($ts === false) {
     $fehler[] = "Ungültiges Einstellungsdatum.";
@@ -77,12 +80,14 @@ if (!empty($fehler)) {
     }
     exit;
 }
+}
 
 // In DB speichern (anpassen!)
 $stmt = $pdo->prepare("
     INSERT INTO benutzer (name, vorname, rolle, wochenstunden, urlaubstage, einstellungsdatum)
     VALUES (:name, :vorname, :rolle, :wochenstunden, :urlaubstage, :einstellungsdatum)
 ");
+try{
 $stmt->execute([
     ':name'              => $nachname,
     ':vorname'           => $vorname,
@@ -90,11 +95,18 @@ $stmt->execute([
     ':wochenstunden'     => $wochenstunden,
     ':urlaubstage'       => $urlaubstage,
     ':einstellungsdatum' => $einstellungsdatum
-]);
+]); $erfolg = "Benutzer erfolgreich angelegt!";
+}
+
+catch (PDOException $e) {
+            $fehler[] = "Fehler beim Speichern: " . $e->getMessage();
+         }
+
 
 echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>"; 
 
 ?>
+
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
@@ -108,7 +120,13 @@ echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>";
     <a href="route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
-    <!-- ChatGTP -->
+
+
+    <p>
+        Geben Sie hier alle Nutzerdaten ein.
+        Alle Felder sind Pflichtfelder.
+    </p>
+
   <form action="insert_user.php" method="post"><br>
     <!-- Name -->
     <label for="name">Name</label>
@@ -138,7 +156,7 @@ echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>";
 
     <!-- Urlaubstage -->
     <label for="urlaubstage">Urlaubstage</label>
-    <input type="number" id="urlaubstage" name="urlaubstage" min="1" max="29" required><br>
+    <input type="number" id="urlaubstage" name="urlaubstage" min="1" max="30" required><br>
 
     <!-- Einstellungsdatum -->
     <label for="einstellungsdatum">Einstellungsdatum</label>
@@ -149,6 +167,6 @@ echo "<p style='color:green;'>Benutzer erfolgreich angelegt!</p>";
     <button type="button" onclick="window.history.back()">Zurück</button>
   </form>
 
-  <p>Platzhalter.</p>
+ 
 </body>
 </html>
