@@ -19,9 +19,9 @@ $benutzer = aktueller_benutzer();
     <a href="ausloggen.php">Abmelden</a>
     <?= modus_navigation() ?>
   </nav>
-  <ul>
-    <li><a href="erfassung.php">Erfassung</a></li>
-    <li><a href="auswertung.php">Meine Auswertung</a></li>
-  </ul>
+  <div class="menu-links">
+    <a class="btn primary" href="erfassung_mitarbeiter.php">Arbeitszeit einpflegen / bestätigen</a>
+    <a class="btn primary" href="auswertung_mitarbeiter.php">Eigene Monatsübersicht</a>
+  </div>
 </body>
 </html>

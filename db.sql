@@ -34,7 +34,7 @@ CREATE TABLE benutzer (
   -- Wochenstunden_raw
   -- Urlaubstage
   -- Einstellungsdatum
-  aktiv           TINYINT(1) NOT NULL DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
+  aktiv           TINYINT(1) NOT NULL DEFAULT 1 /*1 = aktiv, 0 = deaktiviert*/,
   erstellt_am     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   aktualisiert_am TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (rollen_id) REFERENCES rollen(rollen_id)
@@ -64,7 +64,7 @@ CREATE TABLE stundenzettel (
   stundenzettel_id INT PRIMARY KEY AUTO_INCREMENT,
   benutzer_id      INT NOT NULL,
   monat            TINYINT  NOT NULL CHECK (monat BETWEEN 1 AND 12),
-  jahr             SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2100), -- check sicherte Wertebereich
+  jahr             SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2100) /*check sicherte Wertebereich*/,
   status           ENUM('entwurf','eingereicht','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
   eingereicht_am   DATETIME NULL,
   genehmigt_von    INT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE stundenzettel (
   urlaub_unbezahlt DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   urlaub_sonder    DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   urlaub_gesamt    DECIMAL(5,2) AS (urlaub_bezahlt + urlaub_unbezahlt + urlaub_sonder) STORED,
-  UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr), -- verhindert doppelte Einträge
+  UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr) /*verhindert doppelte Einträge*/,
   FOREIGN KEY (benutzer_id)   REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
   FOREIGN KEY (genehmigt_von) REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -109,7 +109,7 @@ INSERT INTO urlaubsarten(urlaubsart_id, art_schluessel, beschreibung) VALUES
 
 -- Urlaubskonten (jährlicher Anspruch pro Benutzer)
 CREATE TABLE urlaubskonten (
-  konto_id       INT PRIMARY KEY AUTO_INCREMENT,--automatisch +1
+  konto_id       INT PRIMARY KEY AUTO_INCREMENT /*automatisch +1*/,
   benutzer_id    INT NOT NULL,
   jahr           SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2100),
   anspruch_tage  DECIMAL(5,2) NOT NULL,

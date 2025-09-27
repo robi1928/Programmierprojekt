@@ -43,7 +43,11 @@ body{
     var(--hintergrund);
   color:var(--vordergrund);
 }
-body > *{max-width:920px; margin-left:auto; margin-right:auto}
+body > * {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
 
 /* Typografie */
 h1{margin:8px 0 16px; font-size:clamp(1.6rem,1.1rem + 2vw,2.4rem); font-weight:800; letter-spacing:-.01em}
@@ -105,6 +109,16 @@ input:focus,select:focus{border-color:var(--akzent); box-shadow:var(--fokus)}
 .btn.primary{background:var(--akzent); color:#fff; border-color:transparent}
 .btn.primary:hover{background:var(--akzent-stark)}
 a.btn{display:inline-flex; align-items:center; justify-content:center; text-decoration:none}
+
+.menu-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 280px;
+}
+.menu-links .btn {
+  width: 100%; /*damit alle Buttons gleich breit sind*/
+}
 
 /* Navigation Buttonms */
 nav{display:flex; flex-wrap:wrap; gap:10px; align-items:center}

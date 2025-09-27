@@ -24,7 +24,7 @@ $benutzer = aktueller_benutzer();
     <li>
       <!--Dashboard fehlt-->
       <a href="system_report.php">Systemreport</a>
-      <a href="erfassung.php">Arbeitszeit erfassen</a>
+      <a href="erfassung_admin.php">Arbeitszeit erfassen</a>
       <a href="freigeben">Arbeitszeiten freigeben</a>
       <a href="team_auswertung.php">Team-Auswertung</a>
       <a href="freigeben.php">Arbeitszeiten freigeben</a>
