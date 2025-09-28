@@ -1,7 +1,7 @@
 <!-- Standardseite, noch ohne Inhalt. Selber geschrieben -->
 <?php
 require_once 'auth.php';
-rolle_erforderlich(ROLLE_ADMIN);
+rolle_erforderlich(ROLLE_MITARBEITER);
 modus_aus_url_setzen();
 ?>
 <!doctype html>
