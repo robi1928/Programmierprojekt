@@ -21,17 +21,18 @@ $benutzer = aktueller_benutzer();
   </nav>
   <ul>
     <!--Liste aller Geschäftsvorfälle, die ein Admin/Projektleiter ausführen darf-->
-    <li>
-      <!--Dashboard fehlt-->
-      <a href="system_report.php">Systemreport</a>
-      <a href="erfassung_admin.php">Arbeitszeit erfassen</a>
-      <a href="freigeben">Arbeitszeiten freigeben</a>
-      <a href="team_auswertung.php">Team-Auswertung</a>
-      <a href="freigeben.php">Arbeitszeiten freigeben</a>
-      <!--Daten exportieren fehlt-->
-      <a href="nutzer">Nutzer anlegen</a>
-    </li>
+
+<div class="menu-links">
+    <a class="btn primary" href="system_report.php">Systemreport</a>
+    <a class="btn primary" href="erfassung_admin.php">Arbeitszeit erfassen</a>
+    <a class="btn primary" href="freigeben">Arbeitszeiten freigeben</a>
+    <a class="btn primary" href="team_auswertung.php">Team-Auswertung</a>
+    <a class="btn primary" href="monatsuebersicht.php">Monatsübersicht</a>
+    <!--Daten exportieren fehlt-->
+    <a class="btn primary" href="nutzer.php">Nutzer anlegen</a>
+  </div>
+    <br>
   </ul>
-  
+  <br>
 </body>
 </html>
