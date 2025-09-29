@@ -79,7 +79,7 @@ html[data-theme="dark"] .card{background:rgba(17,24,39,.6)}
 html[data-theme="light"] .card{background:rgba(255,255,255,.7)}
 
 /* Formulare */
-.form{display:grid; gap:16px}
+.form{display:grid; gap:16px; gap:14px; max-width:420px}
 .field{display:grid; gap:6px}
 label{font-weight:600}
 input, select {
@@ -157,3 +157,62 @@ html[data-theme="dark"] .theme-icon{background:rgba(17,24,39,.6)}
 /* Fokus-Style für Tastatur-Nutzer */
 :focus-visible{outline:none; box-shadow:var(--fokus)}
 
+/*für die Zeiterfassung ergänzt. Auch überall anders übernehmen*/
+.menu{margin:8px 0 16px}
+
+.row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+
+.status{display:flex; gap:16px; align-items:center}
+
+.note{color:var(--text-gedämpft)}
+
+.alert-ok{
+  padding:10px 12px;
+  border:1px solid var(--rahmen);
+  border-radius:var(--radius);
+  background:rgba(16,185,129,.12);
+}
+.alert-err{
+  padding:10px 12px;
+  border:1px solid var(--rahmen);
+  border-radius:var(--radius);
+  background:rgba(239,68,68,.12);
+}
+
+@media (max-width:480px){
+  .row{grid-template-columns:1fr}
+}
+
+/*für die Zeiterfassung für die Statusauswahl ergänzt. Auch überall anders übernehmen*/
+.status {
+  display:flex; gap:10px;
+}
+
+.status-option {
+  flex:1;
+  padding:8px 12px;
+  font-size:.95rem;
+  border:1px solid var(--rahmen);
+  border-radius:var(--radius);
+  text-align:center;
+  cursor:pointer;
+  user-select:none;
+  background:var(--hintergrund);
+  color:var(--vordergrund);
+  opacity:.55;
+  transition:.2s;
+}
+.status-option input { display:none }
+
+.status-option:has(input:checked) {
+  opacity:1;
+}
+
+.status-option.arbeitstag:has(input:checked){border-color:#16a34a; background:color-mix(in oklab,#16a34a 12%,var(--hintergrund));}
+.status-option.krank:has(input:checked){border-color:#dc2626; background:color-mix(in oklab,#dc2626 12%,var(--hintergrund));}
+.status-option.urlaub:has(input:checked){border-color:#2563eb; background:color-mix(in oklab,#2563eb 12%,var(--hintergrund));}
+
+html[data-theme="dark"] .status-option {background:rgba(255,255,255,.05)}
+html[data-theme="dark"] .status-option.arbeitstag:has(input:checked){background:color-mix(in oklab,#16a34a 18%,transparent)}
+html[data-theme="dark"] .status-option.krank:has(input:checked){background:color-mix(in oklab,#dc2626 18%,transparent)}
+html[data-theme="dark"] .status-option.urlaub:has(input:checked){background:color-mix(in oklab,#2563eb 18%,transparent)}

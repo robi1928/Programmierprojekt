@@ -25,7 +25,7 @@ $benutzer = aktueller_benutzer();
 <div class="menu-links">
     <a class="btn primary" href="system_report.php">Systemreport</a>
     <a class="btn primary" href="erfassung_admin.php">Arbeitszeit erfassen</a>
-    <a class="btn primary" href="freigeben">Arbeitszeiten freigeben</a>
+    <a class="btn primary" href="freigaben_admin.php">Arbeitszeiten freigeben</a>
     <a class="btn primary" href="team_auswertung.php">Team-Auswertung</a>
     <a class="btn primary" href="monatsuebersicht.php">Monatsübersicht</a>
     <!--Daten exportieren fehlt-->
