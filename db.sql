@@ -10,7 +10,6 @@ DROP TABLE IF EXISTS urlaubsantraege;
 DROP TABLE IF EXISTS urlaubskonten;
 DROP TABLE IF EXISTS urlaubsarten;
 DROP TABLE IF EXISTS stundenzettel;
--- ARBEITSORTE RAUS?
 DROP TABLE IF EXISTS arbeitsorte;
 DROP TABLE IF EXISTS benutzer;
 DROP TABLE IF EXISTS rollen;
@@ -31,9 +30,9 @@ CREATE TABLE benutzer (
   nachname        VARCHAR(100) NOT NULL,
   email           VARCHAR(255) NOT NULL UNIQUE,
   rollen_id       TINYINT NOT NULL,
-  -- Wochenstunden_raw
-  -- Urlaubstage
-  -- Einstellungsdatum
+  Wochenstunden_raw DECIMAL(2,1) NOT NULL, --neu
+  Urlaubstage     DECIMAL(2,0) NOT NULL, --neu
+  Einstellungsdatum TIMESTAMP NOT NULL, --neu
   aktiv           TINYINT(1) NOT NULL DEFAULT 1 /*1 = aktiv, 0 = deaktiviert*/,
   erstellt_am     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   aktualisiert_am TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -41,21 +40,23 @@ CREATE TABLE benutzer (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Beispiel-Benutzer
-INSERT INTO benutzer(vorname,nachname,email,rollen_id) VALUES
-  ('Max','Meier','max.muster@example.com',1),
-  ('Erika','Müller','erika.beispiel@example.com',1),
-  ('Lena','Deiters','teamleitung@example.com',2),
-  ('Frida','Schoppen','admin@example.com',3);
+-- um die neuen Variablen ergänzt
+
+INSERT INTO benutzer(vorname,nachname,email,rollen_id,Wochenstunden_raw, Urlaubstage, Einstellungsdatum, aktiv, erstellt_am, aktualisiert_am) VALUES
+  ('Max','Meier','max.muster@example.com',1, "20", "23", "01.05.2025", 1, "01.05.2025", "12.05.2025"),
+  ('Erika','Müller','erika.beispiel@example.com',1, "35.5", "10", "01.01.2024",0,"20.12.2023","01.09.2025"),
+  ('Lena','Deiters','teamleitung@example.com',2, "40", "30", "01.01.2023", 1, "02.01.2023", "02.01.2023"),
+  ('Frida','Schoppen','admin@example.com',3, "42", "5", "01.10.2024", 1, "25.09.2024", "23.09.2025");
 
 
--- DIESER BLOCK KANN RAUS?
+
 -- Arbeitsorte (Dropdown-Auswahl, optional)
 CREATE TABLE arbeitsorte (
   ort_id      TINYINT PRIMARY KEY,
   bezeichnung VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- DIESER BLOCK KANN RAUS?
+
 INSERT INTO arbeitsorte(ort_id,bezeichnung) VALUES
   (0,'k. A.'),(1,'Zu Hause'),(2,'Beim Kunden'),(3,'Im Büro');
 
