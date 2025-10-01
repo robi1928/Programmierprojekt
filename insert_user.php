@@ -24,10 +24,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $urlaubstage        = (int)($_POST['urlaubstage'] ?? 0);
     $einstellungsdatum  = $_POST['einstellungsdatum'] ?? '';
 
- 
-
-
-
     // Prüfen ob Pflichtfelder ausgefüllt sind
     if ($vorname === "" || $nachname === "" || $email === "" || $rollen_id === 0 || $wochenstunden_raw === "" || $urlaubstage === "" || $einstellungsdatum === "") {
         die("Bitte alle Felder ausfüllen!");
@@ -58,7 +54,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 echo "<pre>";
 print_r($_POST);
 echo "</pre>";
-
 
 $conn->close();
 ?>

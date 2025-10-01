@@ -1,5 +1,7 @@
 ToDo Liste:
-- Seiten skalierbar machen
+- Seiten skalierbar machen -> prozentual
 - Mobilansicht
 - Mobil gedreht sicht
 - Zeitzone fest rein
+
+Unklar ob halbe Urlaubstage

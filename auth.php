@@ -9,7 +9,7 @@ const ROLLE_TEAMLEITUNG='teamleitung';
 const ROLLE_ADMIN='admin';
 
 /**
- * Gibt die Daten des aktuell eingeloggten Users zurück (aus $_SESSION['user']), oder null, falls niemand eingeloggt ist.
+ * Gibt die Daten des aktuell eingeloggten Benutzers zurück (aus $_SESSION['user']), oder null, falls niemand eingeloggt ist.
  * Rückgabeformat ist ein Array mit Benutzerdaten (id, email, role, …), das beim Login in die Session geschrieben wird.*/
 function aktueller_benutzer(): ?array {
     return $_SESSION['benutzer'] ?? null;

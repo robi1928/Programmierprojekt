@@ -3,6 +3,7 @@
 require_once 'auth.php';
 rolle_erforderlich(ROLLE_ADMIN);
 modus_aus_url_setzen();
+
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
