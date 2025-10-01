@@ -15,8 +15,8 @@ $erfolg = "";
 // Nur prüfen, wenn Formular abgesendet wurde 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
 // Eingaben abholen  
-$nachname           = trim($_POST['name'] ?? '');
 $vorname            = trim($_POST['vorname'] ?? '');
+$nachname           = trim($_POST['name'] ?? '');
 $email              = trim($_POST['email']);
 $rollen_id          = $_POST['rolle'] ?? '';
 $wochenstunden_raw  = $_POST['wochenstunden'] ?? '';
@@ -57,7 +57,7 @@ if ($wochenstunden <= 0 || $wochenstunden >= 42) {
 }
 
 // Urlaubstage prüfen: 1–30
-if ($urlaubstage <= 0 || $urlaubstage >= 30) {
+if ($urlaubstage <= 1 || $urlaubstage >= 30) {
     $fehler[] = "Urlaubstage müssen zwischen 1 und 30 liegen.";
 }
 
@@ -84,13 +84,14 @@ if (!empty($fehler)) {
 
 // In DB speichern (anpassen!)
 $stmt = $pdo->prepare("
-    INSERT INTO benutzer (name, vorname, rolle, wochenstunden, urlaubstage, einstellungsdatum)
-    VALUES (:name, :vorname, :rolle, :wochenstunden, :urlaubstage, :einstellungsdatum)
+    INSERT INTO benutzer (name, vorname, email, rolle, wochenstunden, urlaubstage, einstellungsdatum)
+    VALUES (:name, :vorname, :email, :rolle, :wochenstunden, :urlaubstage, :einstellungsdatum)
 ");
 try{
 $stmt->execute([
-    ':name'              => $nachname,
     ':vorname'           => $vorname,
+    ':name'              => $nachname,
+    ':email'             => $email,
     ':rolle'             => $rollen_id,
     ':wochenstunden'     => $wochenstunden,
     ':urlaubstage'       => $urlaubstage,

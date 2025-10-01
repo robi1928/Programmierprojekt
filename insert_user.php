@@ -14,19 +14,27 @@ if ($conn->connect_error) {
 
 // --- Formulardaten auslesen (nur wenn POST) ---
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
     // Eingaben absichern (SQL-Injection vermeiden)
-    $vorname   = trim($_POST["vorname"] ?? "");
-    $nachname  = trim($_POST["nachname"] ?? "");
-    $email     = trim($_POST["email"] ?? "");
-    $rollen_id = intval($_POST["rollen_id"] ?? 0);
+    $vorname            = trim($_POST['vorname'] ?? "");
+    $nachname           = trim($_POST['nachname'] ?? "");
+    $email              = trim($_POST['email'] ?? "");
+    $rollen_id          = intval($_POST['rollen_id'] ?? 0);
+    $wochenstunden_raw  = $_POST['wochenstunden'] ?? '';
+    $urlaubstage        = (int)($_POST['urlaubstage'] ?? 0);
+    $einstellungsdatum  = $_POST['einstellungsdatum'] ?? '';
+
+ 
+
+
 
     // Prüfen ob Pflichtfelder ausgefüllt sind
-    if ($vorname === "" || $nachname === "" || $email === "" || $rollen_id === 0) {
+    if ($vorname === "" || $nachname === "" || $email === "" || $rollen_id === 0 || $wochenstunden_raw === "" || $urlaubstage === "" || $einstellungsdatum === "") {
         die("Bitte alle Felder ausfüllen!");
     }
 
     // SQL vorbereiten
-    $sql = "INSERT INTO benutzer (vorname, nachname, email, rollen_id) 
+    $sql = "INSERT INTO benutzer (vorname, nachname, email, rollen_id, wochenstunden,  urlaubstage, einstellungsdatum) 
             VALUES (?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
@@ -34,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         die("Fehler beim Vorbereiten des Statements: " . $conn->error);
     }
 
-    $stmt->bind_param("sssi", $vorname, $nachname, $email, $rollen_id);
+    $stmt->bind_param("sssi", $vorname, $nachname, $email, $rollen_id, $wochenstunden_raw, $urlaubstage, $einstellungsdatum);
 
     // --- Ausführen & Feedback ---
     if ($stmt->execute()) {
@@ -45,7 +53,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     $stmt->close();
+
 }
+echo "<pre>";
+print_r($_POST);
+echo "</pre>";
+
 
 $conn->close();
 ?>
