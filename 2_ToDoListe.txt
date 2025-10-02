@@ -5,3 +5,10 @@ ToDo Liste:
 - Zeitzone fest rein
 
 Unklar ob halbe Urlaubstage
+
+
+Sql create und insert trennen
+Php funktionen ausgliedern, Seiten rein html
+Noch irgendetwas
+
+Funktion nächstes Mal entwickeln
