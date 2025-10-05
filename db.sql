@@ -25,14 +25,14 @@ INSERT INTO rollen(rollen_id, rollen_schluessel) VALUES
 
 -- Benutzer-Tabelle
 CREATE TABLE benutzer (
-  benutzer_id     INT PRIMARY KEY AUTO_INCREMENT,
+  benutzer_id     INT AUTO_INCREMENT PRIMARY KEY,
   vorname         VARCHAR(100) NOT NULL,
   nachname        VARCHAR(100) NOT NULL,
   email           VARCHAR(255) NOT NULL UNIQUE,
   rollen_id       TINYINT NOT NULL,
-  Wochenstunden_raw DECIMAL(3,1) NOT NULL,
-  Urlaubstage     DECIMAL(3,1) NOT NULL,
-  Einstellungsdatum TIMESTAMP NOT NULL,
+  wochenstunden DECIMAL(4,1) NOT NULL,
+  urlaubstage     DECIMAL(3,1) NOT NULL,
+  einstellungsdatum TIMESTAMP NOT NULL,
   aktiv           TINYINT(1) NOT NULL DEFAULT 1 /*1 = aktiv, 0 = deaktiviert*/,
   erstellt_am     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   aktualisiert_am TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -43,7 +43,7 @@ CREATE TABLE benutzer (
 -- um die neuen Variablen ergänzt
 -- erstellt_am/aktualisiert_am erstmal raus
 INSERT INTO benutzer
-  (vorname, nachname, email, rollen_id, Wochenstunden_raw, Urlaubstage, Einstellungsdatum, aktiv)
+  (vorname, nachname, email, rollen_id, wochenstunden, urlaubstage, einstellungsdatum, aktiv)
 VALUES
   ('Max','Meier','max.muster@example.com',1, 20.0, 23.0, '2025-05-01', 1),
   ('Erika','Müller','erika.beispiel@example.com',1, 35.5, 10.0, '2024-01-01', 0),
