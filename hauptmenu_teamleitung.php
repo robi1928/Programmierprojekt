@@ -19,11 +19,13 @@ $benutzer = aktueller_benutzer();
     <a href="ausloggen.php">Abmelden</a>
     <?= modus_navigation() ?>
   </nav>
-  <ul>
-    <!--Dashboard fehlt-->
-    <li><a href="team_auswertung.php">Team-Auswertung</a></li>
-    <li><a href="freigaben.php">Arbeitszeiten freigaben</a></li>
-    <li><a href="nutzer">Nutzer anlegen</a></li>
-  </ul>
+<div class="menu-links">
+    <a class="btn primary" href="erfassung_admin.php">Arbeitszeit erfassen</a>
+    <a class="btn primary" href="freigaben_admin.php">Arbeitszeiten freigeben</a>
+    <a class="btn primary" href="team_auswertung.php">Team-Auswertung</a>
+    <a class="btn primary" href="monatsuebersicht.php">Monatsübersicht</a>
+    <a class="btn primary" href="nutzer_anlegen_teamleitung.php">Nutzer anlegen</a>
+        <!--Dashboard fehlt-->
+  </div>
 </body>
 </html>
