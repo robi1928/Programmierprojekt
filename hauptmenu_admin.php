@@ -29,7 +29,7 @@ $benutzer = aktueller_benutzer();
     <a class="btn primary" href="team_auswertung.php">Team-Auswertung</a>
     <a class="btn primary" href="monatsuebersicht.php">Monatsübersicht</a>
     <!--Daten exportieren fehlt-->
-    <a class="btn primary" href="nutzer.php">Nutzer anlegen</a>
+    <a class="btn primary" href="nutzer_anlegen_admin.php">Nutzer anlegen</a>
   </div>
     <br>
   </ul>
