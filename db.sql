@@ -39,6 +39,8 @@ CREATE TABLE benutzer (
   FOREIGN KEY (rollen_id) REFERENCES rollen(rollen_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+
 -- Beispiel-Benutzer
 -- um die neuen Variablen ergänzt
 -- erstellt_am/aktualisiert_am erstmal raus
@@ -49,6 +51,10 @@ VALUES
   ('Erika','Müller','erika.beispiel@example.com',1, 35.5, 10.0, '2024-01-01', 0),
   ('Lena','Deiters','teamleitung@example.com',2, 40.0, 30.0, '2023-01-01', 1),
   ('Frida','Schoppen','admin@example.com',3, 41.9,  5.0, '2024-10-01', 1);
+
+
+-- die Variante mit "Source" funktioniert speziell bei MySQL
+-- SOURCE insert_benutzer.sql;
 
 -- Arbeitsorte (Dropdown-Auswahl, optional)
 CREATE TABLE arbeitsorte (
