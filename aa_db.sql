@@ -128,6 +128,7 @@ CREATE TABLE vorgabenAuftraggeber (
     quartal TINYINT NOT NULL CHECK (quartal BETWEEN 1 AND 4),
     erwarteteKrankenquote DECIMAL(5,2) NOT NULL CHECK (erwarteteKrankenquote BETWEEN 0 AND 100),
     sollStunden INT NOT NULL CHECK (sollStunden > 0),
+    istStunden INT NOT NULL CHECK (istStunden >= 0),
     toleranz DECIMAL(5,2) NOT NULL CHECK (toleranz BETWEEN 0 AND 100),
 
     -- Quartal pro Jahr darf nur EINMAL vorkommen
@@ -172,14 +173,14 @@ VALUES
 (3, 2, 2024, 'abgelehnt', '2024-02-27 12:00:00', NULL, NULL, 165.00, 140.50, 0.00, 0.00, 0.00),
 (4, 10, 2024, 'entwurf', NULL, NULL, NULL, 169.00, 0.00, 0.00, 0.00, 0.00),
 (1, 11, 2023, 'genehmigt', '2023-11-29 15:00:00', 3, '2023-11-30 08:10:00', 88.00, 90.00, 0.00, 0.00, 0.00),
-(2, 4, 2025, 'eingereicht', '2025-04-29 17:00:00', NULL, NULL, 152.00, 150.25, 0.00, 1.00, 0.00);
+(2, 11, 2025, 'eingereicht', '2025-11-29 17:00:00', NULL, NULL, 152.00, 150.25, 0.00, 1.00, 0.00);
 
 -- ChatGPT erstellte beispielhafte Vorgaben
 INSERT INTO vorgabenAuftraggeber
-  (jahr, quartal, erwarteteKrankenquote, sollStunden, toleranz)
+  (jahr, quartal, erwarteteKrankenquote, sollStunden, istStunden, toleranz)
 VALUES
-  (2025, 1, 4.50, 480, 3.00),
-  (2025, 2, 4.70, 490, 3.00),
-  (2025, 3, 4.20, 475,  3.00),
-  (2025, 4, 5.00, 500, 3.00);
+  (2025, 1, 4.50, 480, 0, 3.00),
+  (2025, 2, 4.70, 490, 0, 3.00),
+  (2025, 3, 4.20, 475, 0,  3.00),
+  (2025, 4, 5.00, 500, 0, 3.00);
 

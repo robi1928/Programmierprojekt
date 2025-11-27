@@ -1,7 +1,7 @@
 <!-- Standardseite, noch ohne Inhalt. Selber geschrieben -->
 <?php
 require_once 'bb_auth.php';
-include_once 'aa_db.php';
+include_once 'bb_db.php';
 include_once 'cc_VorgabenAuftraggeber.php';
 
 rolle_erforderlich(ROLLE_ADMIN);
@@ -15,7 +15,8 @@ $monat   = (int)$heute->format("n");
 $quartal = ceil($monat / 3);
 
 // Vorgaben für aktuelles Quartal laden
-$vorgabe = CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
+$vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
+
 
 ?>
 <!doctype html>
@@ -52,6 +53,8 @@ if ($vorgabe === null) {
     echo "<p>Für dieses Quartal ($quartal/$jahr) liegen keine Vorgaben vor.</p>";
 } else {
     echo "<p>Sollstunden (Quartal): " . $vorgabe->GetSollStunden() . "</p>";
+    echo "<p>IstStunden (Quartal): " . $vorgabe->GetIstStunden() . "</p>";
+    echo "<p>Anteil IstStunden zu Sollstunden: " . $vorgabe->GetAnteilIstStunden() . " %</p>";
 }
 ?>
   <br>
