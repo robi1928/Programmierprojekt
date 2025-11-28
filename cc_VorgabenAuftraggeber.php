@@ -41,6 +41,7 @@ class CVorgabenAuftraggeber
         $this->toleranz = $toleranz;
     }
 
+    // Nebenrechnung
     private function RechneIstStunden(PDO $pdo): void
     {
         $stmt = $pdo->prepare(
@@ -142,6 +143,7 @@ public function GetAnteilIstStunden(): float
     }
 
     // Danke Copilot
+    // Berechnet den Toleranzbereich basierend auf den Sollstunden und der Toleranz in Prozent
 public function Toleranzbereich(): array
     {
         $min = $this->sollStunden * (1 - $this->toleranz / 100);
@@ -152,6 +154,7 @@ public function Toleranzbereich(): array
 
 
  // Danke Copilot 
+ // Nebenrechnung
  // Generiere Liste der Feiertage in SH für ein gegebenes Jahr, um sie später von den Arbeitstagen abzuziehen 
 private function feiertageSH(int $jahr): array
 {
@@ -175,6 +178,7 @@ private function feiertageSH(int $jahr): array
 }
 
 // ChatGPT generierte Funktion
+// berechnet die die verfügbare Anzahl der Arbeitstage im Quartal
 public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
 {
     $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
@@ -183,7 +187,7 @@ public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
     $start = new DateTime("$jahr-$startMonat-01");
     $ende = (clone $start)->modify("+3 months")->modify("-1 day");
 
-    $arbeitstage = 0;
+    $arbeitstageInsgesamt = 0;
 
     for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
         $datum = $d->format("Y-m-d");
@@ -195,11 +199,13 @@ public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
         // Feiertag?
         if (in_array($datum, $feiertage)) continue;
 
-        $arbeitstage++;
+        $arbeitstageInsgesamt++;
     }
 
-    return $arbeitstage;
+    return $arbeitstageInsgesamt;
 }
+
+
 
 // ChatGPT generierte Funktion
 // Ich möchte die Arbeitstage im Quartal bis zum heutigen Datum berechnen, um die Ist-Stunden realistisch einschätzen zu können.
@@ -223,7 +229,7 @@ public function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal):
         return 0;
     }
 
-    $arbeitstage = 0;
+    $arbeitstageBisher = 0;
 
     for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
         $datum = $d->format("Y-m-d");
@@ -235,12 +241,16 @@ public function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal):
         // Feiertag überspringen
         if (in_array($datum, $feiertage, true)) continue;
 
-        $arbeitstage++;
+        $arbeitstageBisher++;
     }
 
-    return $arbeitstage;
+    return $arbeitstageBisher;
 }
 
+
+
+// Danke Copilot
+// Ich möchte den prozentualen Anteil der vergangenen Arbeitstage im Quartal berechnen, im Vergleich zu den insgesamt verfügbaren Arbeitstagen.
 public function prozentualeVergangeneArbeitstageImQuartal(int $jahr, int $quartal): float
     {
         $vergangeneArbeitstage = CVorgabenAuftraggeber::berechneVergangeneArbeitstageImQuartal($jahr, $quartal);
@@ -252,6 +262,26 @@ public function prozentualeVergangeneArbeitstageImQuartal(int $jahr, int $quarta
 
         return ($vergangeneArbeitstage / $insgesamtArbeitstage) * 100.0;
     }
+
+
+// Danke Copilot
+// Ich möchte den Bedarf an Planstunden bis zum Ende des Quartals berechnen, unter Berücksichtigung der erwarteten Krankenquote.    
+public function BedarfPlanstundenBisEndeQuartal(): array
+{
+    $toleranz = $this->Toleranzbereich();
+    $minimum = $toleranz['min'];
+    $maximum = $toleranz['max'];
+    $ist_Stunden = $this->GetIstStunden();  
+    $erwarteteKrankenquote = $this->GetErwarteteKrankenquote();
+
+    $bedarfMin = ($minimum - $ist_Stunden) * (1 + $erwarteteKrankenquote / 100);
+    $bedarfMax = ($maximum - $ist_Stunden) * (1 + $erwarteteKrankenquote / 100);
+
+    return [
+        'bis_min' => $bedarfMin,
+        'bis_max' => $bedarfMax
+    ];
+}
     
 }
 

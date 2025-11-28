@@ -61,10 +61,12 @@ if ($vorgabe === null) {
     echo "<p> Arbeitstage insgesamt: " . $vorgabe->berechneArbeitstageMitFeiertagen($jahr, $quartal) . "</p>";
     echo "<p> Davon bereits vergangene Arbeitstage: " . $vorgabe->berechneVergangeneArbeitstageImQuartal($jahr, $quartal) . "</p>";
     echo "<p> Anteil vergangene Arbeitstage: " . number_format($vorgabe->prozentualeVergangeneArbeitstageImQuartal($jahr, $quartal), 1, ',', '') . " %</p>";
-
+    echo "<p> Bedarf Planstunden bis Ende Quartal: " . number_format($vorgabe->BedarfPlanstundenBisEndeQuartal()['bis_min'], 2, ',', '') . "</p>"; 
+    echo "<p> Maximale Planstunden bis Ende Quartal: " . number_format($vorgabe->BedarfPlanstundenBisEndeQuartal()['bis_max'], 2, ',', '') . "</p>";
     
 }
 ?>
+
   <br>
 </body>
 </html>
