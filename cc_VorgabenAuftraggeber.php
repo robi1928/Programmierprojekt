@@ -127,6 +127,7 @@ class CVorgabenAuftraggeber
         );
     }
     
+    // Danke Copilot
 public function GetAnteilIstStunden(): float
     {
         $Anteil = 0;
@@ -140,6 +141,117 @@ public function GetAnteilIstStunden(): float
         return $this->Anteil;
     }
 
+    // Danke Copilot
+public function Toleranzbereich(): array
+    {
+        $min = $this->sollStunden * (1 - $this->toleranz / 100);
+        $max = $this->sollStunden * (1 + $this->toleranz / 100);
+        return ['min' => $min, 'max' => $max];
+    }
+
+
+
+ // Danke Copilot 
+ // Generiere Liste der Feiertage in SH für ein gegebenes Jahr, um sie später von den Arbeitstagen abzuziehen 
+private function feiertageSH(int $jahr): array
+{
+    $feiertage = [];
+
+    // feste Feiertage
+    $feiertage[] = "$jahr-01-01"; // Neujahr
+    $feiertage[] = "$jahr-05-01"; // Tag der Arbeit
+    $feiertage[] = "$jahr-10-03"; // Tag der dt. Einheit
+    $feiertage[] = "$jahr-12-25";
+    $feiertage[] = "$jahr-12-26";
+
+    // bewegliche Feiertage
+    $ostersonntag = date("Y-m-d", easter_date($jahr));
+    $feiertage[] = date("Y-m-d", strtotime("$ostersonntag -2 days"));  // Karfreitag
+    $feiertage[] = date("Y-m-d", strtotime("$ostersonntag +1 day"));   // Ostermontag
+    $feiertage[] = date("Y-m-d", strtotime("$ostersonntag +39 days")); // Christi Himmelfahrt
+    $feiertage[] = date("Y-m-d", strtotime("$ostersonntag +50 days")); // Pfingstmontag
+
+    return $feiertage;
+}
+
+// ChatGPT generierte Funktion
+public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
+{
+    $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
+
+    $startMonat = ($quartal - 1) * 3 + 1;
+    $start = new DateTime("$jahr-$startMonat-01");
+    $ende = (clone $start)->modify("+3 months")->modify("-1 day");
+
+    $arbeitstage = 0;
+
+    for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
+        $datum = $d->format("Y-m-d");
+        $wochentag = (int)$d->format("N");
+
+        // Wochenende?
+        if ($wochentag >= 6) continue;
+
+        // Feiertag?
+        if (in_array($datum, $feiertage)) continue;
+
+        $arbeitstage++;
+    }
+
+    return $arbeitstage;
+}
+
+// ChatGPT generierte Funktion
+// Ich möchte die Arbeitstage im Quartal bis zum heutigen Datum berechnen, um die Ist-Stunden realistisch einschätzen zu können.
+public function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal): int
+{
+    // Feiertage laden (du hast ja bereits feiertageSH($jahr))
+    $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
+
+    // Startmonat berechnen
+    $startMonat = ($quartal - 1) * 3 + 1;
+
+    // Quartalsbeginn
+    $start = new DateTime(sprintf("%04d-%02d-01", $jahr, $startMonat));
+
+    // Heute
+    $heute = new DateTime();
+    $ende = clone $heute;   // wir zählen bis heute (inklusive)
+
+    // Wenn "heute" vor Quartalsbeginn liegt → 0
+    if ($ende < $start) {
+        return 0;
+    }
+
+    $arbeitstage = 0;
+
+    for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
+        $datum = $d->format("Y-m-d");
+        $wochentag = (int)$d->format("N"); // 1=Mo ... 7=So
+
+        // Wochenende überspringen
+        if ($wochentag >= 6) continue;
+
+        // Feiertag überspringen
+        if (in_array($datum, $feiertage, true)) continue;
+
+        $arbeitstage++;
+    }
+
+    return $arbeitstage;
+}
+
+public function prozentualeVergangeneArbeitstageImQuartal(int $jahr, int $quartal): float
+    {
+        $vergangeneArbeitstage = CVorgabenAuftraggeber::berechneVergangeneArbeitstageImQuartal($jahr, $quartal);
+        $insgesamtArbeitstage = CVorgabenAuftraggeber::berechneArbeitstageMitFeiertagen($jahr, $quartal);
+
+        if ($insgesamtArbeitstage === 0) {
+            return 0.0;
+        }
+
+        return ($vergangeneArbeitstage / $insgesamtArbeitstage) * 100.0;
+    }
     
 }
 

@@ -48,13 +48,21 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
   </div>
     <br>
   </ul>
+
   <?php
 if ($vorgabe === null) {
     echo "<p>Für dieses Quartal ($quartal/$jahr) liegen keine Vorgaben vor.</p>";
 } else {
     echo "<p>Sollstunden (Quartal): " . $vorgabe->GetSollStunden() . "</p>";
+    echo "<p>Untergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['min'] . "</p>";
+    echo "<p>Obergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['max'] . "</p>";
     echo "<p>IstStunden (Quartal): " . $vorgabe->GetIstStunden() . "</p>";
     echo "<p>Anteil IstStunden zu Sollstunden: " . $vorgabe->GetAnteilIstStunden() . " %</p>";
+    echo "<p> Arbeitstage insgesamt: " . $vorgabe->berechneArbeitstageMitFeiertagen($jahr, $quartal) . "</p>";
+    echo "<p> Davon bereits vergangene Arbeitstage: " . $vorgabe->berechneVergangeneArbeitstageImQuartal($jahr, $quartal) . "</p>";
+    echo "<p> Anteil vergangene Arbeitstage: " . number_format($vorgabe->prozentualeVergangeneArbeitstageImQuartal($jahr, $quartal), 1, ',', '') . " %</p>";
+
+    
 }
 ?>
   <br>
