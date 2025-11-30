@@ -37,14 +37,19 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
     <!--Liste aller Geschäftsvorfälle, die ein Admin/Projektleiter ausführen darf-->
 
 <div class="menu-links">
+
+    <!-- Was soll im Systemeport stehen? -->
     <a class="btn primary" href="dd_system_report.php">Systemreport</a>
     <a class="btn primary" href="dd_erfassung_admin.php">Arbeitszeit erfassen</a>
     <a class="btn primary" href="dd_freigaben_admin.php">Arbeitszeiten freigeben</a>
-    <a class="btn primary" href="dd_team_auswertung.php">Team-Auswertung</a>
+
+    <!-- Die Auswertung findet jetzt im Hauptmenü statt
+    <a class="btn primary" href="dd_team_auswertung.php">Team-Auswertung</a> -->
     <a class="btn primary" href="dd_monatsuebersicht.php">Monatsübersicht</a>
     <a class="btn primary" href="dd_vorgaben_anlegen.php">Auftraggeber Vorgaben anlegen</a>
     <!--Daten exportieren fehlt-->
     <a class="btn primary" href="dd_nutzer_anlegen_admin.php">Nutzer anlegen</a>
+    <a class="btn primary" href="dd_nutzer_aktualisieren_admin.php">Nutzer verwalten</a>
   </div>
     <br>
   </ul>
@@ -53,11 +58,11 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
 if ($vorgabe === null) {
     echo "<p>Für dieses Quartal ($quartal/$jahr) liegen keine Vorgaben vor.</p>";
 } else {
-    echo "<p>Sollstunden (Quartal): " . $vorgabe->GetSollStunden() . "</p>";
-    echo "<p>Untergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['min'] . "</p>";
-    echo "<p>Obergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['max'] . "</p>";
-    echo "<p>IstStunden (Quartal): " . $vorgabe->GetIstStunden() . "</p>";
-    echo "<p>Anteil IstStunden zu Sollstunden: " . $vorgabe->GetAnteilIstStunden() . " %</p>";
+    echo "<p> Sollstunden (Quartal): " . $vorgabe->GetSollStunden() . "</p>";
+    echo "<p> Untergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['min'] . "</p>";
+    echo "<p> Obergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['max'] . "</p>";
+    echo "<p> IstStunden (Quartal): " . $vorgabe->GetIstStunden() . "</p>";
+    echo "<p> Zielerreichung für Sollstunden: " . $vorgabe->GetAnteilIstStunden() . " %</p>"; //IstStunden / Sollstunden * 100 
     echo "<p> Arbeitstage insgesamt: " . $vorgabe->berechneArbeitstageMitFeiertagen($jahr, $quartal) . "</p>";
     echo "<p> Davon bereits vergangene Arbeitstage: " . $vorgabe->berechneVergangeneArbeitstageImQuartal($jahr, $quartal) . "</p>";
     echo "<p> Anteil vergangene Arbeitstage: " . number_format($vorgabe->prozentualeVergangeneArbeitstageImQuartal($jahr, $quartal), 1, ',', '') . " %</p>";

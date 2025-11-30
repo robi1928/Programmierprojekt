@@ -2,6 +2,7 @@
 
 include 'bb_db.php'; //db.php statt pdo.php
 include 'cc_stundenzettel.php';
+include 'cc_VorgabenAuftraggeber.php';
 
 class CBenutzer {
 
@@ -194,6 +195,7 @@ public function Create() {
     return $result;
 }
 
+
 //Die Update Funktion
 public function Update() {
     global $pdo;
@@ -231,6 +233,90 @@ public function Update() {
     }
     return $result;
 }
+
+public function LoadBenutzerById(PDO $pdo, int $benutzer_id): ?CBenutzer {
+    $stmt = $pdo->prepare("SELECT * FROM benutzer WHERE benutzer_id = :id");
+    $stmt->execute([':id' => $benutzer_id]);    
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) return null;
+    $benutzer = new CBenutzer($row['benutzer_id']);
+    $benutzer->Init(
+        $row['vorname'],
+        $row['nachname'],
+        $row['email'],
+        $row['rollen_id'],
+        $row['wochenstunden'],
+        $row['urlaubstage'],
+        $row['einstellungsdatum']
+    );
+    return $benutzer;    
+}
+
+public function Load() {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM benutzer WHERE benutzer_id = :id");
+    $stmt->execute([':id' => $this->benutzer_id]);    
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) return false;
+    $this->Init(
+        $row['vorname'],
+        $row['nachname'],
+        $row['email'],
+        $row['rollen_id'],
+        $row['wochenstunden'],
+        $row['urlaubstage'],
+        $row['einstellungsdatum']
+    );
+    $this->aktiv = $row['aktiv'];
+    $this->erstellt_am = $row['erstellt_am'];
+    $this->aktualisiert_am = $row['aktualisiert_am'];
+    return true;
+}
+
+//---------------------------------
+//Der Teil funktioniert noch nicht richtig
+
+
+public function berechneArbeitstageMitFeiertagenImMonat(int $jahr, int $monat): int
+{
+    if ($monat < 1 || $monat > 12) {
+        throw new InvalidArgumentException("Ungültiger Monat: $monat (gültig: 1–12)");
+    }
+
+    $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
+
+    $start = new DateTime(sprintf("%04d-%02d-01", $jahr, $monat));
+    $ende  = (clone $start)->modify("last day of this month");
+
+    $arbeitstage = 0;
+
+    for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
+        $datum = $d->format("Y-m-d");
+        $wochentag = (int)$d->format("N");
+
+        if ($wochentag >= 6) continue;
+        if (in_array($datum, $feiertage)) continue;
+
+        $arbeitstage++;
+    }
+
+    return $arbeitstage;
+}
+
+public function GetSollStundenAktuellerMonat($SollWochenstunden): int {
+    $heute = new DateTime();
+    $monat = (int)$heute->format("n");
+    $jahr = (int)$heute->format("Y");
+    
+    $StundenProTag = $SollWochenstunden / 5;
+   
+   // $arbeitstageImMonat = CBenutzer::berechneArbeitstageMitFeiertagenImMonat($jahr, $monat); // "mit Feiertagen" heißt , dass Feiertage nicht als Arbeitstage gezählt werden
+    $arbeitstageImMonat = self::berechneArbeitstageMitFeiertagenImMonat($jahr, $monat);
+    $sollStunden = $StundenProTag * $arbeitstageImMonat;
+    return (int)$sollStunden;
+    }
+ 
+
 }
 
 // passt hier eigentlich nicht richtig, aber benutzer.php wird eigentlich immer mit aufgerufen. Damit nicht auf html Seite
