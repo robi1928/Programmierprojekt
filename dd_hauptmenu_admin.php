@@ -45,7 +45,7 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
 
     <!-- Die Auswertung findet jetzt im Hauptmenü statt
     <a class="btn primary" href="dd_team_auswertung.php">Team-Auswertung</a> -->
-    <a class="btn primary" href="dd_monatsuebersicht.php">Monatsübersicht</a>
+    <a class="btn primary" href="dd_monatsuebersicht_Version2.php">Monatsübersicht</a>
     <a class="btn primary" href="dd_vorgaben_anlegen.php">Auftraggeber Vorgaben anlegen</a>
     <!--Daten exportieren fehlt-->
     <a class="btn primary" href="dd_nutzer_anlegen_admin.php">Nutzer anlegen</a>
