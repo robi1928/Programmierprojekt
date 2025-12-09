@@ -84,6 +84,29 @@ class CStundenzettel {
     }
 }
 
+function holeIststundenAktuellerMonat(PDO $pdo, int $benutzerId, int $monat, int $jahr): float
+{
+    $sql = "SELECT ist_stunden
+            FROM stundenzettel
+            WHERE benutzer_id = :bid
+              AND monat       = :monat
+              AND jahr        = :jahr
+            LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':bid'   => $benutzerId,
+        ':monat' => $monat,
+        ':jahr'  => $jahr,
+    ]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        return 0.0;
+    }
+
+    return (float)$row['ist_stunden'];
+}
+
 // beschreibt das wie (laden, aktualisieren)
 final class CStundenzettelRepository {
     public static function findeOderErstelle(PDO $pdo, int $benutzerId, int $monat, int $jahr): int {

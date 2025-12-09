@@ -78,15 +78,6 @@ class CBenutzer {
     public function GetWochenstunden() {
     return $this->wochenstunden;
 }
-// liefert den Resturlaub im aktuellen Jahr zurück --> Name verwirrend, ggf. umbenennen
-public function GetUrlaubstage() {
-    return $this->GetUrlaubsanspruch() - $this->GetUrlaubGenommen();
-}
-
-// liefert den Urlaubsanspruch im aktuellen Jahr zurück
-public function GetUrlaubsanspruch() {
-    return $this->urlaubstage;
-}
 
 private function LadeStundenzettel() {
     if ($this->StundenzettelGeladen == false) {
@@ -115,18 +106,6 @@ private function LadeStundenzettel() {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
         }
     }
-}
-
-// liefert die genommenen Urlaubstage im aktuellen Jahr zurück
-public function GetUrlaubGenommen() {
-    $this->LadeStundenzettel();
-    $UrlaubGenommen = 0;
-    for( $i = 0; $i < count($this->Stundenzettel); $i++) {
-        if( $this->Stundenzettel[$i]->IstUrlaub()) {
-            $UrlaubGenommen++;
-        }
-    }
-    return $UrlaubGenommen;
 }
 
 public function GetEinstellungsdatum() {
@@ -273,11 +252,7 @@ public function Load() {
     return true;
 }
 
-//---------------------------------
-//Der Teil funktioniert noch nicht richtig
-
-
-public function berechneArbeitstageMitFeiertagenImMonat(int $jahr, int $monat): int
+private static function berechneArbeitstageMitFeiertagenImMonat(int $jahr, int $monat): int
 {
     if ($monat < 1 || $monat > 12) {
         throw new InvalidArgumentException("Ungültiger Monat: $monat (gültig: 1–12)");
@@ -295,7 +270,7 @@ public function berechneArbeitstageMitFeiertagenImMonat(int $jahr, int $monat): 
         $wochentag = (int)$d->format("N");
 
         if ($wochentag >= 6) continue;
-        if (in_array($datum, $feiertage)) continue;
+        if (in_array($datum, $feiertage, true)) continue;
 
         $arbeitstage++;
     }
@@ -303,19 +278,23 @@ public function berechneArbeitstageMitFeiertagenImMonat(int $jahr, int $monat): 
     return $arbeitstage;
 }
 
-public function GetSollStundenAktuellerMonat($SollWochenstunden): int {
+public function GetSollStundenAktuellerMonat(): int {
+    if ($this->wochenstunden <= 0) {
+        return 0;
+    }
+
     $heute = new DateTime();
     $monat = (int)$heute->format("n");
-    $jahr = (int)$heute->format("Y");
-    
-    $StundenProTag = $SollWochenstunden / 5;
-   
-   // $arbeitstageImMonat = CBenutzer::berechneArbeitstageMitFeiertagenImMonat($jahr, $monat); // "mit Feiertagen" heißt , dass Feiertage nicht als Arbeitstage gezählt werden
+    $jahr  = (int)$heute->format("Y");
+
     $arbeitstageImMonat = self::berechneArbeitstageMitFeiertagenImMonat($jahr, $monat);
-    $sollStunden = $StundenProTag * $arbeitstageImMonat;
-    return (int)$sollStunden;
+    if ($arbeitstageImMonat === 0) {
+        return 0;
     }
- 
+
+    $stundenProTag = $this->wochenstunden / 5;
+    return (int)round($stundenProTag * $arbeitstageImMonat);
+}
 
 }
 

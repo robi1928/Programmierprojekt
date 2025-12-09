@@ -11,7 +11,7 @@ session_start();
 // Diese Strings müssen zu den Werten in der Datenbank passen
 const ROLLE_MITARBEITER='mitarbeiter';
 const ROLLE_TEAMLEITUNG='teamleitung';
-const ROLLE_ADMIN='admin';
+const ROLLE_PROJEKTLEITUNG='projektleitung';
 
 /* Gibt die Daten des aktuell eingeloggten Benutzers zurück (aus $_SESSION['benutzer']), oder null, falls niemand eingeloggt ist.
  * Rückgabeformat ist ein Array mit Benutzerdaten (id, email, role, …), das beim Login in die Session geschrieben wird.*/

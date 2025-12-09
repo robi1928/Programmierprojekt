@@ -68,9 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="field">
       <label for="datum">Tag</label>
       <input id="datum" name="datum" type="date"
-             max="<?= $maxDate ?>"
-             value="<?= h($_POST['datum'] ?? $maxDate) ?>" required>
-      <small class="note">Nur vergangene Tage erlaubt.</small>
+            max="<?= $maxDate ?>"
+            value="<?= h($_POST['datum'] ?? $maxDate) ?>" required>
+      <small class="note" id="datumHint">
+        Arbeitszeit &amp; Krankheit nur rückwirkend (inkl. heute). Urlaub auch im Voraus möglich.
+      </small>
     </div>
 
     <div class="status">
@@ -133,28 +135,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <!-- selber versucht, mit GTP verbessert. Hab hier ausnahmsweise JavaScript genutzt.-->
   <!-- braucht es nicht zwingend, aber ist schöner. Deaktiviert einige Felder wenn sinnvoll. Für die Server Logik egal-->
-  <script>
-  (function(){
-    const radios = document.querySelectorAll('input[name="status"]');
-    const zeitBlock = document.getElementById('zeitBlock');
-    const inputs = zeitBlock.querySelectorAll('input, select');
-    function sync(){
-      const v = document.querySelector('input[name="status"]:checked')?.value || 'none';
-      const disable = (v === 'krank' || v === 'urlaub');
-      inputs.forEach(el => {
-        if (el.id === 'bemerkung') return;
-        el.disabled = disable;
-      });
-      if (disable) {
-        const s = document.getElementById('start');
-        const e = document.getElementById('ende');
-        if (s) s.value = '';
-        if (e) e.value = '';
+<script>
+(function(){
+  const radios = document.querySelectorAll('input[name="status"]');
+  const zeitBlock = document.getElementById('zeitBlock');
+  const inputs = zeitBlock.querySelectorAll('input, select');
+  const dateInput = document.getElementById('datum');
+  const maxDate = dateInput.max;              // <- hier: nicht dataset.max
+  const hint = document.getElementById('datumHint');
+
+  function sync(){
+    const v = document.querySelector('input[name="status"]:checked')?.value || 'none';
+    const disableZeit = (v === 'krank' || v === 'urlaub');
+
+    // Zeitfelder (Start/Ende, Ort) sperren bei Krank/Urlaub
+    inputs.forEach(el => {
+      if (el.id === 'bemerkung') return;
+      el.disabled = disableZeit;
+    });
+    if (disableZeit) {
+      const s = document.getElementById('start');
+      const e = document.getElementById('ende');
+      if (s) s.value = '';
+      if (e) e.value = '';
+    }
+
+    // Datum: nur für Urlaub Zukunft erlauben
+    if (v === 'urlaub') {
+      dateInput.removeAttribute('max');
+      if (hint) {
+        hint.textContent = 'Arbeitszeit & Krankheit nur rückwirkend (inkl. heute). Urlaub beliebig (auch in Zukunft).';
+      }
+    } else {
+      dateInput.max = maxDate;
+      if (hint) {
+        hint.textContent = 'Arbeitszeit & Krankheit nur rückwirkend (inkl. heute). Urlaub auch im Voraus möglich.';
+      }
+      if (dateInput.value && dateInput.value > maxDate) {
+        dateInput.value = maxDate;
       }
     }
-    radios.forEach(r => r.addEventListener('change', sync));
-    sync();
-  })();
-  </script>
+  }
+
+  radios.forEach(r => r.addEventListener('change', sync));
+  sync();
+})();
+</script>
 </body>
 </html>

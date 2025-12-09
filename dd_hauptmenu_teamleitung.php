@@ -22,10 +22,9 @@ $benutzer = aktueller_benutzer();
 <div class="menu-links">
     <a class="btn primary" href="dd_erfassung_teamleitung.php">Arbeitszeit erfassen</a>
     <a class="btn primary" href="dd_freigaben_teamleitung.php">Arbeitszeiten freigeben</a>
-    <a class="btn primary" href="dd_team_auswertung.php">Team-Auswertung</a>
-    <a class="btn primary" href="dd_monatsuebersicht.php">Monatsübersicht</a>
     <a class="btn primary" href="dd_nutzer_anlegen_teamleitung.php">Nutzer anlegen</a>
-        <!--Dashboard fehlt-->
+    <a class="btn primary" href="dd_nutzer_aktualisieren_teamleitung.php">Nutzer aktualisieren</a>
+    <a class="btn primary" href="dd_monatsuebersicht.php">Monatsübersicht</a>
   </div>
 </body>
 </html>

@@ -1,5 +1,4 @@
 <?php
-// orientiert an cc_benutzer. Dringend klären, ob das so bleiben soll.
 
 class CZeiteintrag {
     private int $stundenzettel_id;
@@ -68,16 +67,24 @@ class CErfassungVerarbeitung
     public static function validateInput(array $post, array $orte, string $maxDate): array
     {
         $datum = $post['datum'] ?? '';
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) throw new RuntimeException('Ungültiges Datum.');
-        if ($datum > $maxDate) throw new RuntimeException('Datum muss in der Vergangenheit liegen');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
+            throw new RuntimeException('Ungültiges Datum.');
+        }
 
-        $status = $post['status'] ?? 'none';
+        $status    = $post['status'] ?? 'none';
         $bemerkung = trim($post['bemerkung'] ?? '') ?: null;
 
+        // Nur für Arbeitstag/Krank begrenzen, Urlaub darf in der Zukunft liegen
+        if ($status !== 'urlaub' && $datum > $maxDate) {
+            throw new RuntimeException('Datum muss in der Vergangenheit liegen');
+        }
+
+        // Krank / Urlaub: keine Zeiten, 0 Stunden, Status in Bemerkung
         if (in_array($status, ['krank','urlaub'], true)) {
             return [$datum, 0, 0.0, $status];
         }
 
+        // Ab hier nur noch Arbeitstag
         $start = trim($post['start'] ?? '');
         $ende  = trim($post['ende'] ?? '');
         if (!preg_match('/^\d{2}:\d{2}$/', $start) || !preg_match('/^\d{2}:\d{2}$/', $ende)) {
@@ -86,14 +93,22 @@ class CErfassungVerarbeitung
 
         [$sh,$sm] = array_map('intval', explode(':',$start));
         [$eh,$em] = array_map('intval', explode(':',$ende));
-        $startMin = $sh*60 + $sm; $endeMin = $eh*60 + $em;
-        if ($endeMin <= $startMin) throw new RuntimeException('Endzeit muss nach Startzeit liegen.');
+        $startMin = $sh*60 + $sm;
+        $endeMin  = $eh*60 + $em;
+        if ($endeMin <= $startMin) {
+            throw new RuntimeException('Endzeit muss nach Startzeit liegen.');
+        }
+
         $stunden = round(($endeMin - $startMin)/60, 2);
-        if ($stunden > 24) throw new RuntimeException('So viele Stunden hat kein Tag.');
+        if ($stunden > 24) {
+            throw new RuntimeException('So viele Stunden hat kein Tag.');
+        }
 
         $validOrte = array_column($orte, 'ort_id');
         $ortId = (int)($post['ort_id'] ?? 0);
-        if (!in_array($ortId, $validOrte, true)) throw new RuntimeException('Ungültiger Arbeitsort.');
+        if (!in_array($ortId, $validOrte, true)) {
+            throw new RuntimeException('Ungültiger Arbeitsort.');
+        }
 
         return [$datum, $ortId, $stunden, $bemerkung];
     }

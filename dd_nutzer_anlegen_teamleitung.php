@@ -140,7 +140,7 @@ if (empty($fehler)) {
         <option value="">-- Bitte auswählen --</option>
         <option value="1" <?= (($_POST['rolle'] ?? '')==='1')?'selected':''; ?>>Mitarbeiter</option>
         <option value="2" <?= (($_POST['rolle'] ?? '')==='2')?'selected':''; ?>>Teamleitung</option>
-        <option value="3" <?= (($_POST['rolle'] ?? '')==='3')?'selected':''; ?>>Admin</option>
+        <option value="3" <?= (($_POST['rolle'] ?? '')==='3')?'selected':''; ?>>Projektleitung</option>
     </select><br>
 
     <label for="wochenstunden">Regelmäßige Wochenstunden</label>

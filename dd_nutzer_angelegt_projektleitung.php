@@ -1,4 +1,4 @@
-<!-- Weiterverarbeitung des Formulars aus dd_vorgaben_anlegen.php -->
+<!-- Weiterverarbeitung des Formulars aus nutzer_anlegen_projektleitung.php -->
 <?php
 require_once 'bb_auth.php';
 rolle_erforderlich(ROLLE_PROJEKTLEITUNG);
@@ -8,11 +8,11 @@ modus_aus_url_setzen();
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
   <meta charset="utf-8">
-  <title>Vorgaben anlegen</title>
+  <title>Nutzer anlegen</title>
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-  <h1>Vorgaben anlegen</h1>
+  <h1>Nutzer anlegen</h1>
   <nav>
     <a href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
@@ -20,17 +20,18 @@ modus_aus_url_setzen();
 
 <?php
 
-include_once 'cc_VorgabenAuftraggeber.php';
-$Vorgaben = new CVorgabenAuftraggeber( 
-    //-1, 
-    $_GET['jahr'], 
-    $_GET['quartal'], 
-    $_GET['erwarteteKrankenquote'], 
-    $_GET['sollStunden'], 
-    $_GET['toleranz'], 
-
+include_once 'cc_benutzer.php';
+$Benutzer = new CBenutzer(-1);
+$Benutzer->Init(
+    $_GET['vorname'],
+    $_GET['nachname'],
+    $_GET['email'],
+    (int)$_GET['rolle'],
+    (float)$_GET['wochenstunden'],
+    (float)$_GET['urlaubstage'],
+    $_GET['einstellungsdatum']
 );
-$result = $Vorgaben->InsertIntoDB($pdo);
+$result = $Benutzer->Create();
 if( $result ) {
     echo '<p>Speichern erfolgreich.</p>';
 } else {

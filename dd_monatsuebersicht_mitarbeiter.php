@@ -7,7 +7,7 @@ $benutzer_id = $benutzer['id'] ?? $benutzer['benutzer_id'] ?? null;
 if (!$benutzer_id) {
     die("Fehler: Benutzer-ID nicht in der Session gefunden.");
 }
-// -------------------
+
 $servername = "localhost";
 $username   = "root";
 $password   = "";
@@ -18,9 +18,7 @@ if ($conn->connect_error) {
     die("Verbindung fehlgeschlagen: " . $conn->connect_error);
 }
 
-// -------------------
 // Aktuelles Quartal berechnen
-// -------------------
 $heute = new DateTime();
 $jahr = $heute->format("Y");
 $monat = (int)$heute->format("n");
@@ -31,9 +29,7 @@ $quartal_start = new DateTime("$jahr-$quartal_start_monat-01");
 $quartal_ende = clone $quartal_start;
 $quartal_ende->modify("+3 months")->modify("-1 day");
 
-// -------------------
 // Feiertage
-// -------------------
 function getFeiertage($jahr) {
     $feiertage = [
         "$jahr-01-01", "$jahr-05-01", "$jahr-10-03", "$jahr-12-25", "$jahr-12-26",
@@ -47,9 +43,7 @@ function getFeiertage($jahr) {
 }
 $feiertage = getFeiertage($jahr);
 
-// -------------------
 // Hilfsfunktion: Summen aus DB holen (nur eigener Benutzer)
-// -------------------
 function getSummen($conn, $datumSql, $benutzer_id) {
     $result = ["stunden" => 0, "urlaub" => 0, "krank" => 0];
 

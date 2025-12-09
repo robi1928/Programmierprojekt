@@ -1,6 +1,6 @@
 <?php
 require_once 'bb_auth.php';
-rolle_erforderlich(ROLLE_ADMIN);
+rolle_erforderlich(ROLLE_PROJEKTLEITUNG);
 modus_aus_url_setzen();
 
  // Variablen vorbereiten

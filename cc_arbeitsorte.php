@@ -1,5 +1,4 @@
 <?php
-// orientiert an cc_benutzer. Dringend klären, ob das so bleiben soll.
 
 class CArbeitsort {
     private ?int $ort_id = null;
@@ -27,7 +26,6 @@ class CArbeitsort {
     }
 }
 
-// wollen wir nach IDs Filtern? Für Dashboard schauen, ansonsten löschen
 final class CArbeitsortRepository {
     public static function findeNachId(PDO $pdo, int $id): ?array {
         $st = $pdo->prepare("SELECT ort_id, bezeichnung FROM arbeitsorte WHERE ort_id = ? LIMIT 1");

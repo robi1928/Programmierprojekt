@@ -42,7 +42,7 @@ class CVorgabenAuftraggeber
     }
 
     // Nebenrechnung
-    private function RechneIstStunden(PDO $pdo): void
+    private function RechneIstStunden(PDO $pdo): int
     {
         $stmt = $pdo->prepare(
             "SELECT SUM(stundenzettel.ist_stunden) AS summeStunden
@@ -70,6 +70,7 @@ class CVorgabenAuftraggeber
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->ist_Stunden = (int)($row['summeStunden'] ?? 0);
+        return $this->ist_Stunden;
     }
 
 
@@ -78,9 +79,10 @@ class CVorgabenAuftraggeber
     public function GetQuartal(): int { return $this->quartal; }
     public function GetErwarteteKrankenquote(): float { return $this->erwarteteKrankenquote; }
     public function GetSollStunden(): int { return $this->sollStunden; }
-    public function GetIstStunden(): int { 
-        $ist_Stunden = CVorgabenAuftraggeber::RechneIstStunden($GLOBALS['pdo']);
-        return $this->ist_Stunden; }
+    public function GetIstStunden(): int 
+    {
+        return $this->RechneIstStunden($GLOBALS['pdo']);
+    }
 
     public function GetToleranz(): float { return $this->toleranz; }
 
@@ -130,17 +132,13 @@ class CVorgabenAuftraggeber
     
     // Danke Copilot
 public function GetAnteilIstStunden(): float
-    {
-        $Anteil = 0;
-        if ($this->sollStunden === 0) {
-            return 0.0;
-        }
-        else {
-            $this->Anteil = ($this->ist_Stunden / $this->sollStunden) * 100.0;
-        }
-
-        return $this->Anteil;
+{
+    if ($this->sollStunden === 0) {
+        return 0.0;
     }
+
+    return ($this->ist_Stunden / $this->sollStunden) * 100.0;
+}
 
     // Danke Copilot
     // Berechnet den Toleranzbereich basierend auf den Sollstunden und der Toleranz in Prozent
@@ -156,7 +154,7 @@ public function Toleranzbereich(): array
  // Danke Copilot 
  // Nebenrechnung
  // Generiere Liste der Feiertage in SH für ein gegebenes Jahr, um sie später von den Arbeitstagen abzuziehen 
-private function feiertageSH(int $jahr): array
+public static function feiertageSH(int $jahr): array
 {
     $feiertage = [];
 
@@ -179,9 +177,9 @@ private function feiertageSH(int $jahr): array
 
 // ChatGPT generierte Funktion
 // berechnet die die verfügbare Anzahl der Arbeitstage im Quartal
-public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
+public static function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
 {
-    $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
+    $feiertage = self::feiertageSH($jahr);
 
     $startMonat = ($quartal - 1) * 3 + 1;
     $start = new DateTime("$jahr-$startMonat-01");
@@ -193,11 +191,8 @@ public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
         $datum = $d->format("Y-m-d");
         $wochentag = (int)$d->format("N");
 
-        // Wochenende?
-        if ($wochentag >= 6) continue;
-
-        // Feiertag?
-        if (in_array($datum, $feiertage)) continue;
+        if ($wochentag >= 6) continue;                 // Wochenende
+        if (in_array($datum, $feiertage)) continue;    // Feiertag
 
         $arbeitstageInsgesamt++;
     }
@@ -209,7 +204,7 @@ public function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal): int
 
 // ChatGPT generierte Funktion
 // Ich möchte die Arbeitstage im Quartal bis zum heutigen Datum berechnen, um die Ist-Stunden realistisch einschätzen zu können.
-public function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal): int
+public static function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal): int
 {
     // Feiertage laden (du hast ja bereits feiertageSH($jahr))
     $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
@@ -251,7 +246,7 @@ public function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal):
 
 // Danke Copilot
 // Ich möchte den prozentualen Anteil der vergangenen Arbeitstage im Quartal berechnen, im Vergleich zu den insgesamt verfügbaren Arbeitstagen.
-public function prozentualeVergangeneArbeitstageImQuartal(int $jahr, int $quartal): float
+public static function prozentualeVergangeneArbeitstageImQuartal(int $jahr, int $quartal): float
     {
         $vergangeneArbeitstage = CVorgabenAuftraggeber::berechneVergangeneArbeitstageImQuartal($jahr, $quartal);
         $insgesamtArbeitstage = CVorgabenAuftraggeber::berechneArbeitstageMitFeiertagen($jahr, $quartal);

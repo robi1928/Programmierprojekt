@@ -12,8 +12,8 @@ switch ($benutzer['rolle']) {
     case ROLLE_TEAMLEITUNG:
         header('Location: dd_hauptmenu_teamleitung.php');
         break;
-    case ROLLE_ADMIN:
-        header('Location: dd_hauptmenu_admin.php');
+    case ROLLE_PROJEKTLEITUNG:
+        header('Location: dd_hauptmenu_projektleitung.php');
         break;
     // Fallback: wenn Rolle unbekannt oder fehlerhaft → zurück zur Login-Seite
     default:
