@@ -51,12 +51,6 @@ class CStundenzettel {
         return $obj;
     }
 
-    public function getId(): ?int { return $this->stundenzettel_id; }
-
-    public function getUrlaubGesamt(): float {
-        return $this->urlaub_gesamt;
-    }
-
     // das Folgende war eigentlich alles in Erfassung Mitarbeiter und ist jetzt für die Fachobjekte hierrein gezogen. Ursprungscode geschrieben von mir, jetzt angepasst mit GTP für die Fachobjekte
     public function create(PDO $pdo): bool {
         $allowed = ['entwurf','genehmigt','abgelehnt'];

@@ -286,3 +286,20 @@ details summary {
     font-weight: 500;
     font-size: .9rem;
 }
+
+.fade-block {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity .18s ease,
+    max-height .18s ease,
+    transform .18s ease;
+}
+
+.fade-block.is-visible {
+  opacity: 1;
+  max-height: 140px;
+  transform: translateY(0);
+}

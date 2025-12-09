@@ -77,6 +77,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </small>
     </div>
 
+    <!-- Enddatum für Urlaub (wird per JS ein-/ausgeblendet) -->
+    <div class="field fade-block" id="datumEndeField">
+      <label for="datum_ende">bis (inkl.)</label>
+      <input id="datum_ende" name="datum_ende" type="date"
+            max="<?= $maxDate ?>"
+            value="<?= h($_POST['datum_ende'] ?? '') ?>">
+      <small class="note" id="datumEndeHint">
+        Nur bei Urlaub: letzter Tag des Urlaubs (inklusive).
+      </small>
+    </div>
+
     <div class="status">
       <label class="status-option arbeitstag">
         <input type="radio" name="status" value="none" <?= (($_POST['status'] ?? 'none') === 'none') ? 'checked' : '' ?>>
@@ -139,15 +150,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <!-- braucht es nicht zwingend, aber ist schöner. Deaktiviert einige Felder wenn sinnvoll. Für die Server Logik egal-->
 <script>
 (function(){
-  const radios = document.querySelectorAll('input[name="status"]');
-  const zeitBlock = document.getElementById('zeitBlock');
-  const inputs = zeitBlock.querySelectorAll('input, select');
-  const dateInput = document.getElementById('datum');
-  const maxDate = dateInput.max;              // <- hier: nicht dataset.max
-  const hint = document.getElementById('datumHint');
+  const radios      = document.querySelectorAll('input[name="status"]');
+  const zeitBlock   = document.getElementById('zeitBlock');
+  const inputs      = zeitBlock.querySelectorAll('input, select');
+  const dateInput   = document.getElementById('datum');
+  const maxDate     = dateInput ? dateInput.max : null;
+  const hint        = document.getElementById('datumHint');
+
+  const endDateField = document.getElementById('datumEndeField');
+  const endDateInput = document.getElementById('datum_ende');
+
+  function aktuellerStatus() {
+    const checked = document.querySelector('input[name="status"]:checked');
+    return checked ? checked.value : 'none';
+  }
 
   function sync(){
-    const v = document.querySelector('input[name="status"]:checked')?.value || 'none';
+    const v = aktuellerStatus();
     const disableZeit = (v === 'krank' || v === 'urlaub');
 
     // Zeitfelder (Start/Ende, Ort) sperren bei Krank/Urlaub
@@ -162,25 +181,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (e) e.value = '';
     }
 
-    // Datum: nur für Urlaub Zukunft erlauben
     if (v === 'urlaub') {
-      dateInput.removeAttribute('max');
+      // Startdatum darf in der Zukunft liegen
+      if (dateInput) {
+        dateInput.removeAttribute('max');
+      }
+
       if (hint) {
-        hint.textContent = 'Arbeitszeit & Krankheit nur rückwirkend (inkl. heute). Urlaub beliebig (auch in Zukunft).';
+        hint.textContent =
+          'Arbeitszeit & Krankheit nur rückwirkend (inkl. heute). Urlaub auch im Voraus möglich';
+      }
+
+      // Enddatum-Feld einblenden + Werte setzen
+      if (endDateField && endDateInput) {
+        endDateField.classList.add('is-visible');
+
+        // Standard: wenn leer, auf Startdatum bzw. maxDate setzen
+        if (!endDateInput.value) {
+          endDateInput.value = (dateInput && dateInput.value) || maxDate || '';
+        }
+
+        // Ende darf nicht vor Start liegen
+        endDateInput.removeAttribute('max');   // Urlaub beliebig
+        endDateInput.min = (dateInput && dateInput.value) || '';
+        if (endDateInput.value && endDateInput.min && endDateInput.value < endDateInput.min) {
+          endDateInput.value = endDateInput.min;
+        }
       }
     } else {
-      dateInput.max = maxDate;
-      if (hint) {
-        hint.textContent = 'Arbeitszeit & Krankheit nur rückwirkend (inkl. heute). Urlaub auch im Voraus möglich.';
+      // Startdatum: wieder auf maxDate (heute) begrenzen
+      if (dateInput && maxDate) {
+        dateInput.max = maxDate;
+        if (dateInput.value && dateInput.value > maxDate) {
+          dateInput.value = maxDate;
+        }
       }
-      if (dateInput.value && dateInput.value > maxDate) {
-        dateInput.value = maxDate;
+
+      if (hint) {
+        hint.textContent =
+          'Arbeitszeit & Krankheit nur rückwirkend (inkl. heute). Urlaub auch im Voraus möglich.';
+      }
+
+      // Enddatum-Feld ausblenden und zurücksetzen
+      if (endDateField && endDateInput) {
+        endDateField.classList.remove('is-visible');
+        endDateInput.value = '';
+        endDateInput.removeAttribute('min');
+        if (maxDate) {
+          endDateInput.max = maxDate;
+        }
       }
     }
   }
 
+  // Wenn Startdatum geändert wird und Urlaub aktiv ist, Enddatum nachziehen
+  if (dateInput && endDateInput) {
+    dateInput.addEventListener('change', function(){
+      if (aktuellerStatus() === 'urlaub') {
+        endDateInput.min = dateInput.value || '';
+        if (endDateInput.value && endDateInput.min && endDateInput.value < endDateInput.min) {
+          endDateInput.value = endDateInput.min;
+        }
+      }
+    });
+  }
+
   radios.forEach(r => r.addEventListener('change', sync));
-  sync();
+  sync(); // Initialzustand anwenden
 })();
 </script>
 </body>

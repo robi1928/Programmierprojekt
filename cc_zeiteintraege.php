@@ -126,33 +126,62 @@ public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzer
         $jahr  = (int)$d->format('Y');
         $tag   = (int)$d->format('j');
 
+        // Nur für Urlaub: optionales Enddatum einlesen
+        $dEnd = null;
+        $urlaubTage = 0.0;
+
+        if ($status === 'urlaub') {
+            $datumEndeStr = trim($post['datum_ende'] ?? '');
+
+            if ($datumEndeStr !== '') {
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datumEndeStr)) {
+                    throw new RuntimeException('Ungültiges Enddatum für Urlaub.');
+                }
+
+                $dEnd = new DateTimeImmutable($datumEndeStr);
+
+                if ($dEnd < $d) {
+                    throw new RuntimeException('Enddatum darf nicht vor dem Startdatum liegen.');
+                }
+
+                $diff = $d->diff($dEnd);
+                $urlaubTage = (float)($diff->days + 1);   // inkl. Start- und Endtag
+            } else {
+                // kein Enddatum angegeben → 1 Tag Urlaub
+                $urlaubTage = 1.0;
+                $dEnd = null; // erzeugeGenehmigtenTag macht dann Start == Ende
+            }
+        }
+
         $pdo->beginTransaction();
         try {
             // Stundenzettel finden/erstellen
             $szId = CStundenzettelRepository::findeOderErstelle($pdo, $benutzerId, $monat, $jahr);
 
-            // Zeiteintrag speichern
+            // Zeiteintrag speichern (auch bei Urlaub/Krank → 0 Stunden & Ort 0)
             CZeiteintragRepository::upsert($pdo, $szId, $tag, $ortId, $stunden, $bemerkung);
 
             // Ist-Stunden neu berechnen
             CStundenzettelRepository::recalcIst($pdo, $szId);
 
-        if ($status === 'urlaub') {
-            $urlaubTage = 1.0; // ggf. später halbe Tage etc.
+            if ($status === 'urlaub') {
+                // Urlaubstage aufs Konto buchen
+                $konto = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahr);
+                $konto->bucheUrlaub($pdo, $urlaubTage);
 
-            $konto = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahr);
-            $konto->bucheUrlaub($pdo, $urlaubTage);
+                // Urlaub im Stundenzettel summieren
+                CStundenzettelRepository::bucheUrlaub($pdo, $szId, $urlaubTage);
 
-            CStundenzettelRepository::bucheUrlaub($pdo, $szId, $urlaubTage);
+                // Urlaubsantrag anlegen (Start–Ende)
+                CUrlaubsantragRepository::erzeugeGenehmigtenTag(
+                    $pdo,
+                    $benutzerId,
+                    $d,      // Startdatum
+                    $dEnd,   // kann null sein → Methode setzt Ende = Start
+                    $bemerkung
+                );
+            }
 
-            CUrlaubsantragRepository::erzeugeGenehmigtenTag(
-                $pdo,
-                $benutzerId,
-                $d,             // DateTimeImmutable
-                $urlaubTage,
-                $bemerkung
-            );
-        }
             $pdo->commit();
             return $szId;
         } catch (Throwable $e) {

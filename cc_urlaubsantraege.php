@@ -237,27 +237,44 @@ final class CUrlaubsantragRepository
         \PDO $pdo,
         int $benutzerId,
         \DateTimeInterface $datum,
-        float $tage,
+        ?\DateTimeInterface $datumEnde,
         ?string $bemerkung
     ): CUrlaubsantrag {
+
+        // Wenn kein Enddatum gesetzt wurde → Einzelurlaubstag
+        if ($datumEnde === null) {
+            $datumEnde = $datum;
+        }
+
+        if ($datumEnde < $datum) {
+            throw new InvalidArgumentException('Enddatum darf nicht vor dem Startdatum liegen.');
+        }
+
+        // Anzahl Tage berechnen (inkl. Start + Ende)
+        $diff = $datum->diff($datumEnde);
+        $tage = (float)($diff->days + 1);
+
         if ($tage <= 0) {
             throw new InvalidArgumentException('Tage müssen größer 0 sein.');
         }
 
-        $dStr = $datum->format('Y-m-d');
-
+        // Antrag erstellen
         $antrag = new CUrlaubsantrag(
             $benutzerId,
-            $dStr,
-            $dStr,
+            $datum->format('Y-m-d'),
+            $datumEnde->format('Y-m-d'),
             $tage
         );
-        $antrag->setBemerkung($bemerkung);
 
-        // „Einreichen“ im Sinne von: Zeitpunkt setzen, Status bleibt 'entwurf'
+        if ($bemerkung !== null && $bemerkung !== '') {
+            $antrag->setBemerkung($bemerkung);
+        }
+
+        // Zeitpunkt des Einreichens
         $now = new \DateTimeImmutable();
         $antrag->setEingereichtZeitpunkt($now);
 
+        // In DB speichern
         $antrag->save($pdo);
 
         return $antrag;
