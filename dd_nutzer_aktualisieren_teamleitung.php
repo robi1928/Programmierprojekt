@@ -1,6 +1,6 @@
 <?php
 require_once 'bb_auth.php';
-rolle_erforderlich(ROLLE_PROJEKTLEITUNG);
+rolle_erforderlich(ROLLE_TEAMLEITUNG);
 modus_aus_url_setzen();
 include_once 'cc_benutzer.php';
 include_once 'bb_db.php';
@@ -42,7 +42,7 @@ if ($ausgewaehlte_id) {
   </nav>
 
   <!-- Dropdown-Menü zur Auswahl des Nutzers -->
-  <form method="get" action="dd_nutzer_aktualisieren_projektleitung.php">
+  <form method="get" action="dd_nutzer_aktualisieren_teamleitung.php">
     <label for="benutzer_select">Wähle einen Benutzer:</label>
     <select id="benutzer_select" name="id" onchange="this.form.submit()">
       <option value="">-- Bitte auswählen --</option>
@@ -55,7 +55,7 @@ if ($ausgewaehlte_id) {
   </form>
 
   <?php if ($Benutzer): ?>
-  <form action="dd_nutzer_aktualisiert_projektleitung.php" method="post">
+  <form action="dd_nutzer_aktualisiert_teamleitung.php" method="post">
     <input type="hidden" name="id" value="<?= htmlspecialchars($Benutzer->GetID()) ?>">
     <table>
       <tr><td>Vorname:</td><td><input type="text" name="vorname" value="<?= htmlspecialchars($Benutzer->GetVorname()) ?>" required></td></tr>
@@ -70,7 +70,7 @@ if ($ausgewaehlte_id) {
           </select>
         </td>
       </tr>
-      <tr><td>Wochenstunden:</td><td><input type="number" step="0.1" name="wochenstunden" value="<?= htmlspecialchars($Benutzer->GetWochenstunden()) ?>" required></td></tr>
+      <tr><td>Wochenstunden:</td><td><input type="number" name="wochenstunden" step="0.1" value="<?= htmlspecialchars($Benutzer->GetWochenstunden()) ?>" required></td></tr>
       <tr><td>Urlaubstage:</td><td><input type="number" name="urlaubstage" min="1" max="30" value="<?= htmlspecialchars($Benutzer->GetUrlaubsanspruch()) ?>" required></td></tr>
       <tr><td>Einstellungsdatum:</td><td><input type="date" name="einstellungsdatum" value="<?= htmlspecialchars($Benutzer->GetEinstellungsdatum()) ?>" required></td></tr>
       <tr><td colspan="2"><button type="submit">Speichern</button></td></tr>
