@@ -5,14 +5,15 @@
 
 -- Grundgerüst kopiert von Dr. Heimann. Erweitert mit maria.db, Fehlerkorrekturen mit ChatGTP
 -- Falls Tabellen schon existieren → löschen (Reihenfolge wegen Fremdschlüsseln wichtig (Fehler im Heimann Code))
-DROP TABLE IF EXISTS zeiteintraege;
-DROP TABLE IF EXISTS urlaubsantraege;
-DROP TABLE IF EXISTS urlaubskonten;
-DROP TABLE IF EXISTS stundenzettel;
+
 DROP TABLE IF EXISTS arbeitsorte;
 DROP TABLE IF EXISTS benutzer;
 DROP TABLE IF EXISTS rollen;
+DROP TABLE IF EXISTS stundenzettel;
+DROP TABLE IF EXISTS urlaubsantraege;
+DROP TABLE IF EXISTS urlaubskonten;
 DROP TABLE IF EXISTS vorgabenAuftraggeber;
+DROP TABLE IF EXISTS zeiteintraege;
 
 -- Rollen-Tabelle: definiert, welche Arten von Benutzer*innen es gibt
 CREATE TABLE rollen (
@@ -119,5 +120,6 @@ CREATE TABLE vorgabenAuftraggeber (
 
     -- Quartal pro Jahr darf nur EINMAL vorkommen
     UNIQUE KEY uq_jahr_quartal (jahr, quartal)
+
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
