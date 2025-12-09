@@ -59,6 +59,31 @@ final class CZeiteintragRepository {
         return $z->save($pdo);
     }
 
+    /**
+     * Liefert die Summe der Stunden für einen Benutzer an einem Tag.
+     */
+    public static function summeStundenProTag(PDO $pdo, int $benutzerId, DateTimeInterface $tag): float
+    {
+        $datumSql = $tag->format('Y-m-d');
+
+        $sql = "
+            SELECT SUM(z.stunden) AS summe
+            FROM zeiteintraege z
+            JOIN stundenzettel s ON z.stundenzettel_id = s.stundenzettel_id
+            WHERE s.benutzer_id = :bid
+              AND z.tag = :tag
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid' => $benutzerId,
+            ':tag' => $datumSql,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row && $row['summe'] !== null ? (float)$row['summe'] : 0.0;
+    }
+
 }
 
 class CErfassungVerarbeitung

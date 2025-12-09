@@ -339,4 +339,34 @@ final class CUrlaubsantragRepository
 
         return $antrag;
     }
+
+    /**
+     * Zählt genehmigte Urlaubsanträge, die diesen Tag abdecken.
+     * Praktisch 0 oder 1 – wir liefern aber int.
+     */
+    public static function anzahlGenehmigteUrlaubsantraegeAmTag(
+        PDO $pdo,
+        int $benutzerId,
+        DateTimeInterface $tag
+    ): int {
+        $datumSql = $tag->format('Y-m-d');
+
+        $sql = "
+            SELECT COUNT(*) AS cnt
+            FROM urlaubsantraege
+            WHERE status = 'genehmigt'
+              AND benutzer_id = :bid
+              AND start_datum <= :tag
+              AND ende_datum >= :tag
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid' => $benutzerId,
+            ':tag' => $datumSql,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row && $row['cnt'] !== null ? (int)$row['cnt'] : 0;
+    }
 }

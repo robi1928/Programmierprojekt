@@ -37,11 +37,11 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
     <!--Liste aller Geschäftsvorfälle, die ein Projektleiter ausführen darf-->
 
 <div class="menu-links">
-    <a class="btn primary" href="dd_nutzer_anlegen_Projektleitung.php">Mitarbeiter anlegen</a>
-    <a class="btn primary" href="dd_nutzer_aktualisieren_Projektleitung.php">Mitarbeiter aktualisieren</a>
+    <a class="btn primary" href="dd_nutzer_anlegen_projektleitung.php">Mitarbeiter anlegen</a>
+    <a class="btn primary" href="dd_nutzer_aktualisieren_projektleitung.php">Mitarbeiter aktualisieren</a>
     <a class="btn primary" href="dd_vorgaben_anlegen.php">Auftraggeber Vorgaben anlegen</a>
-    <a class="btn primary" href="dd_erfassung_Projektleitung.php">Arbeitszeit erfassen</a>
-    <a class="btn primary" href="dd_freigaben_Projektleitung.php">Arbeitszeiten freigeben</a>
+    <a class="btn primary" href="dd_erfassung_projektleitung.php">Arbeitszeit erfassen</a>
+    <a class="btn primary" href="dd_freigaben_projektleitung.php">Arbeitszeiten freigeben</a>
     <a class="btn primary" href="dd_monatsuebersicht_leitung.php">Monatsübersicht</a>
   </div>
     <br>
