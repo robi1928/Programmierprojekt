@@ -71,12 +71,14 @@ if ($ausgewaehlte_id) {
         </td>
       </tr>
       <tr><td>Wochenstunden:</td><td><input type="number" step="0.1" name="wochenstunden" value="<?= htmlspecialchars($Benutzer->GetWochenstunden()) ?>" required></td></tr>
-      <tr><td>Urlaubstage:</td><td><input type="number" name="urlaubstage" min="1" max="30" value="<?= htmlspecialchars($Benutzer->GetUrlaubsanspruch()) ?>" required></td></tr>
+      <tr><td>Urlaubstage:</td><td><input type="urlaubstage" name="urlaubstage" min="1" max="30"   required></td></tr>
+    
       <tr><td>Einstellungsdatum:</td><td><input type="date" name="einstellungsdatum" value="<?= htmlspecialchars($Benutzer->GetEinstellungsdatum()) ?>" required></td></tr>
-      <tr><td colspan="2"><button type="submit">Speichern</button></td></tr>
-      <tr><td colspan="2"><button type="button" onclick="window.history.back()">Zurück</button></td></tr>
+      <tr><td><button type="submit">Speichern</button></td></tr>
+      <tr><td><button type="button" onclick="window.history.back()">Zurück</button></td></tr>
     </table>
   </form>
   <?php endif; ?>
 </body>
 </html>
+
