@@ -10,20 +10,6 @@ class CArbeitsort {
     }
 
     public function getId(): ?int { return $this->ort_id; }
-
-    // automatisch zusätlich ausgespuckt von GTP bei Fehlerkorrektur
-    // ist beides sinnvoll evtl, löschen, falls nicht benötigt
-    public function update(PDO $pdo): bool {
-        if ($this->ort_id === null) return false;
-        $st = $pdo->prepare("UPDATE arbeitsorte SET bezeichnung = :b WHERE ort_id = :id");
-        return $st->execute([':b'=>$this->bezeichnung, ':id'=>$this->ort_id]);
-    }
-
-    public function delete(PDO $pdo): bool {
-        if ($this->ort_id === null) return false;
-        $st = $pdo->prepare("DELETE FROM arbeitsorte WHERE ort_id = :id");
-        return $st->execute([':id'=>$this->ort_id]);
-    }
 }
 
 final class CArbeitsortRepository {

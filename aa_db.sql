@@ -5,15 +5,14 @@
 
 -- Grundgerüst kopiert von Dr. Heimann. Erweitert mit maria.db, Fehlerkorrekturen mit ChatGTP
 -- Falls Tabellen schon existieren → löschen (Reihenfolge wegen Fremdschlüsseln wichtig (Fehler im Heimann Code))
-
+DROP TABLE IF EXISTS zeiteintraege;
+DROP TABLE IF EXISTS urlaubsantraege;
+DROP TABLE IF EXISTS urlaubskonten;
+DROP TABLE IF EXISTS stundenzettel;
 DROP TABLE IF EXISTS arbeitsorte;
 DROP TABLE IF EXISTS benutzer;
 DROP TABLE IF EXISTS rollen;
-DROP TABLE IF EXISTS stundenzettel;
-DROP TABLE IF EXISTS urlaubsantraege;
-DROP TABLE IF EXISTS urlaubskonten;
 DROP TABLE IF EXISTS vorgabenAuftraggeber;
-DROP TABLE IF EXISTS zeiteintraege;
 
 -- Rollen-Tabelle: definiert, welche Arten von Benutzer*innen es gibt
 CREATE TABLE rollen (
@@ -51,7 +50,7 @@ CREATE TABLE stundenzettel (
   benutzer_id      INT NOT NULL,
   monat            TINYINT  NOT NULL CHECK (monat BETWEEN 1 AND 12),
   jahr             SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2040) /*check sicherte Wertebereich*/,
-  status           ENUM('entwurf','eingereicht','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
+  status           ENUM('entwurf','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
   eingereicht_am   DATETIME NULL,
   genehmigt_von    INT NULL,
   genehmigt_am     DATETIME NULL,
@@ -84,7 +83,6 @@ CREATE TABLE urlaubskonten (
   benutzer_id    INT NOT NULL,
   jahr           SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2040),
   anspruch_tage  DECIMAL(5,2) NOT NULL,
-  uebertrag_tage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   genutzt_tage   DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   UNIQUE KEY uq_benutzer_jahr (benutzer_id, jahr),
   FOREIGN KEY (benutzer_id) REFERENCES benutzer(benutzer_id) ON DELETE CASCADE
@@ -97,7 +95,7 @@ CREATE TABLE urlaubsantraege (
   start_datum    DATE NOT NULL,
   ende_datum     DATE NOT NULL,
   tage           DECIMAL(5,2) NOT NULL,
-  status         ENUM('entwurf','eingereicht','genehmigt','abgelehnt','storniert') NOT NULL DEFAULT 'entwurf',
+  status         ENUM('entwurf','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
   eingereicht_am DATETIME NULL,
   entschieden_von INT NULL,
   entschieden_am  DATETIME NULL,
@@ -120,6 +118,5 @@ CREATE TABLE vorgabenAuftraggeber (
 
     -- Quartal pro Jahr darf nur EINMAL vorkommen
     UNIQUE KEY uq_jahr_quartal (jahr, quartal)
-
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

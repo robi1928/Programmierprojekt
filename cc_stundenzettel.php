@@ -14,6 +14,7 @@ class CStundenzettel {
     private float $soll_stunden = 0.0;
     private float $ist_stunden = 0.0;
     private float $saldo_stunden = 0.0;
+    private float $urlaub_gesamt = 0.0;
     private string $erstellt_am;
     private string $aktualisiert_am;
 
@@ -31,9 +32,6 @@ class CStundenzettel {
         $this->aktualisiert_am = date('Y-m-d H:i:s');
     }
 
-    public function IstUrlaub(): bool {
-    return $this->status === 'urlaub';
-}
     public static function fromRow(array $row): self {
         $obj = new self(
             (int)$row['benutzer_id'],
@@ -46,6 +44,7 @@ class CStundenzettel {
         $obj->soll_stunden     = (float)($row['soll_stunden'] ?? 0);
         $obj->ist_stunden      = (float)($row['ist_stunden'] ?? 0);
         $obj->saldo_stunden    = isset($row['saldo_stunden']) ? (float)$row['saldo_stunden'] : 0.0;
+        $obj->urlaub_gesamt    = isset($row['urlaub_gesamt']) ? (float)$row['urlaub_gesamt'] : 0.0;
         $obj->erstellt_am      = $row['erstellt_am'] ?? date('Y-m-d H:i:s');
         $obj->aktualisiert_am  = $row['aktualisiert_am'] ?? date('Y-m-d H:i:s');
 
@@ -54,10 +53,13 @@ class CStundenzettel {
 
     public function getId(): ?int { return $this->stundenzettel_id; }
 
+    public function getUrlaubGesamt(): float {
+        return $this->urlaub_gesamt;
+    }
+
     // das Folgende war eigentlich alles in Erfassung Mitarbeiter und ist jetzt für die Fachobjekte hierrein gezogen. Ursprungscode geschrieben von mir, jetzt angepasst mit GTP für die Fachobjekte
     public function create(PDO $pdo): bool {
-        // wollen wir bei den vier Statuus bleiben?
-        $allowed = ['entwurf','eingereicht','genehmigt','abgelehnt'];
+        $allowed = ['entwurf','genehmigt','abgelehnt'];
         if (!in_array($this->status, $allowed, true)) {
             $this->status = 'entwurf';
         }
@@ -84,32 +86,14 @@ class CStundenzettel {
     }
 }
 
-function holeIststundenAktuellerMonat(PDO $pdo, int $benutzerId, int $monat, int $jahr): float
-{
-    $sql = "SELECT ist_stunden
-            FROM stundenzettel
-            WHERE benutzer_id = :bid
-              AND monat       = :monat
-              AND jahr        = :jahr
-            LIMIT 1";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':bid'   => $benutzerId,
-        ':monat' => $monat,
-        ':jahr'  => $jahr,
-    ]);
-
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row) {
-        return 0.0;
-    }
-
-    return (float)$row['ist_stunden'];
-}
-
-// beschreibt das wie (laden, aktualisieren)
 final class CStundenzettelRepository {
-    public static function findeOderErstelle(PDO $pdo, int $benutzerId, int $monat, int $jahr): int {
+
+    public static function findeOderErstelle(
+        PDO $pdo,
+        int $benutzerId,
+        int $monat,
+        int $jahr
+    ): int {
         if ($monat < 1 || $monat > 12) {
             throw new InvalidArgumentException('Monat muss 1..12 sein.');
         }
@@ -124,7 +108,8 @@ final class CStundenzettelRepository {
                 stundenzettel_id = LAST_INSERT_ID(stundenzettel_id)
         ";
         $st = $pdo->prepare($sql);
-        $st->execute([':b'=>$benutzerId, ':m'=>$monat, ':j'=>$jahr]);
+        $st->execute([':b' => $benutzerId, ':m' => $monat, ':j' => $jahr]);
+
         return (int)$pdo->lastInsertId();
     }
 
@@ -139,6 +124,50 @@ final class CStundenzettelRepository {
             aktualisiert_am = NOW()
             WHERE s.stundenzettel_id = :id
         ");
-        $st->execute([':id'=>$szId]);
+        $st->execute([':id' => $szId]);
+    }
+
+    public static function holeIststundenAktuellerMonat(
+        PDO $pdo,
+        int $benutzerId,
+        int $monat,
+        int $jahr
+    ): float {
+        $sql = "SELECT ist_stunden
+                FROM stundenzettel
+                WHERE benutzer_id = :bid
+                  AND monat       = :monat
+                  AND jahr        = :jahr
+                LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid'   => $benutzerId,
+            ':monat' => $monat,
+            ':jahr'  => $jahr,
+        ]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return 0.0;
+        }
+
+        return (float)$row['ist_stunden'];
+    }
+
+    public static function bucheUrlaub(PDO $pdo, int $szId, float $tage): void {
+        if ($tage <= 0) {
+            return; // nichts zu tun
+        }
+
+        $st = $pdo->prepare("
+            UPDATE stundenzettel
+            SET urlaub_gesamt = urlaub_gesamt + :tage,
+                aktualisiert_am = NOW()
+            WHERE stundenzettel_id = :id
+        ");
+        $st->execute([
+            ':tage' => $tage,
+            ':id'   => $szId,
+        ]);
     }
 }

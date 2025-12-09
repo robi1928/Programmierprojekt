@@ -8,6 +8,8 @@ require_once __DIR__ . '/cc_benutzer.php';
 require_once __DIR__ . '/cc_arbeitsorte.php';
 require_once __DIR__ . '/cc_stundenzettel.php';
 require_once __DIR__ . '/cc_zeiteintraege.php';
+require_once __DIR__ . '/cc_urlaubskonten.php';
+require_once __DIR__ . '/cc_urlaubsantraege.php';
 $benutzer = aktueller_benutzer();
 
 // benutzer aus fachklasse holen. Ergibt das sinn, dass in cc benutzer die ID private ist?

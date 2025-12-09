@@ -64,7 +64,7 @@ final class CZeiteintragRepository {
 class CErfassungVerarbeitung
 {
     // Validiert POST, berechnet Stunden, liefert [Date, ort_id, stunden, bemerkung]
-    public static function validateInput(array $post, array $orte, string $maxDate): array
+public static function validateInput(array $post, array $orte, string $maxDate): array
     {
         $datum = $post['datum'] ?? '';
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
@@ -76,12 +76,14 @@ class CErfassungVerarbeitung
 
         // Nur für Arbeitstag/Krank begrenzen, Urlaub darf in der Zukunft liegen
         if ($status !== 'urlaub' && $datum > $maxDate) {
-            throw new RuntimeException('Datum muss in der Vergangenheit liegen');
+            throw new RuntimeException('Datum muss in der Vergangenheit liegen.');
         }
 
-        // Krank / Urlaub: keine Zeiten, 0 Stunden, Status in Bemerkung
-        if (in_array($status, ['krank','urlaub'], true)) {
-            return [$datum, 0, 0.0, $status];
+        // Krank / Urlaub: keine Zeiten, 0 Stunden, Ort auf "k. A." (0)
+        if (in_array($status, ['krank', 'urlaub'], true)) {
+            $ortId   = 0;
+            $stunden = 0.0;
+            return [$datum, $status, $ortId, $stunden, $bemerkung];
         }
 
         // Ab hier nur noch Arbeitstag
@@ -91,47 +93,71 @@ class CErfassungVerarbeitung
             throw new RuntimeException('Bitte Start- und Endzeit angeben.');
         }
 
-        [$sh,$sm] = array_map('intval', explode(':',$start));
-        [$eh,$em] = array_map('intval', explode(':',$ende));
-        $startMin = $sh*60 + $sm;
-        $endeMin  = $eh*60 + $em;
+        [$sh, $sm] = array_map('intval', explode(':', $start));
+        [$eh, $em] = array_map('intval', explode(':', $ende));
+        $startMin  = $sh * 60 + $sm;
+        $endeMin   = $eh * 60 + $em;
+
         if ($endeMin <= $startMin) {
             throw new RuntimeException('Endzeit muss nach Startzeit liegen.');
         }
 
-        $stunden = round(($endeMin - $startMin)/60, 2);
+        $stunden = round(($endeMin - $startMin) / 60, 2);
         if ($stunden > 24) {
             throw new RuntimeException('So viele Stunden hat kein Tag.');
         }
 
         $validOrte = array_column($orte, 'ort_id');
-        $ortId = (int)($post['ort_id'] ?? 0);
+        $ortId     = (int)($post['ort_id'] ?? 0);
         if (!in_array($ortId, $validOrte, true)) {
             throw new RuntimeException('Ungültiger Arbeitsort.');
         }
 
-        return [$datum, $ortId, $stunden, $bemerkung];
+        return [$datum, $status, $ortId, $stunden, $bemerkung];
     }
 
     // Komplettablauf: validieren, Stundenzettel sicherstellen, upsert, recalc. Rückgabe: stundenzettel_id
-    public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzerId, string $maxDate): int
+public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzerId, string $maxDate): int
     {
-        [$datum, $ortId, $stunden, $bemerkung] = self::validateInput($post, $orte, $maxDate);
+        [$datum, $status, $ortId, $stunden, $bemerkung] = self::validateInput($post, $orte, $maxDate);
 
-        $d = new DateTimeImmutable($datum);
+        $d     = new DateTimeImmutable($datum);
         $monat = (int)$d->format('n');
         $jahr  = (int)$d->format('Y');
         $tag   = (int)$d->format('j');
 
-        // Stundenzettel finden/erstellen
-        $szId = CStundenzettelRepository::findeOderErstelle($pdo, $benutzerId, $monat, $jahr);
+        $pdo->beginTransaction();
+        try {
+            // Stundenzettel finden/erstellen
+            $szId = CStundenzettelRepository::findeOderErstelle($pdo, $benutzerId, $monat, $jahr);
 
-        // Zeiteintrag speichern
-        CZeiteintragRepository::upsert($pdo, $szId, $tag, $ortId, $stunden, $bemerkung);
+            // Zeiteintrag speichern
+            CZeiteintragRepository::upsert($pdo, $szId, $tag, $ortId, $stunden, $bemerkung);
 
-        // Ist-Stunden neu berechnen
-        CStundenzettelRepository::recalcIst($pdo, $szId);
+            // Ist-Stunden neu berechnen
+            CStundenzettelRepository::recalcIst($pdo, $szId);
 
-        return $szId;
+        if ($status === 'urlaub') {
+            $urlaubTage = 1.0; // ggf. später halbe Tage etc.
+
+            $konto = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahr);
+            $konto->bucheUrlaub($pdo, $urlaubTage);
+
+            CStundenzettelRepository::bucheUrlaub($pdo, $szId, $urlaubTage);
+
+            CUrlaubsantragRepository::erzeugeGenehmigtenTag(
+                $pdo,
+                $benutzerId,
+                $d,             // DateTimeImmutable
+                $urlaubTage,
+                $bemerkung
+            );
+        }
+            $pdo->commit();
+            return $szId;
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }

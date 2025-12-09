@@ -13,8 +13,6 @@ class CBenutzer {
     private $email;
     private $rollen_id;
     private $wochenstunden;
-    private $urlaubstage;   // Anzahl Tage Urlaubsanspruch aktuelles Jahr
-    private $Urlaubsantraege;
     private $einstellungsdatum;
     private $aktiv;
     private $erstellt_am;
@@ -33,7 +31,6 @@ class CBenutzer {
         $this->email = "";
         $this->rollen_id = -1;
         $this->wochenstunden = -1;
-        $this->urlaubstage = -1;
         $this->einstellungsdatum = "";
         // Automatisch gesetzte Werte:
         $this->aktiv = 1; // Nutzer ist standardmäßig aktiv
@@ -44,13 +41,12 @@ class CBenutzer {
     }
 
     // Funktion zum Laden bestehender Daten aus der Datenbank
-    public function Init($in_Vorname, $in_Nachname, $in_EMail, $in_Rolle, $in_Wochenstunden, $in_Urlaubstage, $in_Einstellungsdatum) {
+    public function Init($in_Vorname, $in_Nachname, $in_EMail, $in_Rolle, $in_Wochenstunden, $in_Einstellungsdatum) {
         $this->vorname = $in_Vorname;
         $this->nachname = $in_Nachname;
         $this->email = $in_EMail;
         $this->rollen_id = $in_Rolle;
         $this->wochenstunden = $in_Wochenstunden;
-        $this->urlaubstage = $in_Urlaubstage;
         $this->einstellungsdatum = $in_Einstellungsdatum;
      }
     
@@ -92,7 +88,11 @@ private function LadeStundenzettel() {
                     jahr,
                     status,
                     soll_stunden,
-                    ist_stunden
+                    ist_stunden,
+                    saldo_stunden,
+                    urlaub_gesamt,
+                    erstellt_am,
+                    aktualisiert_am
                 FROM stundenzettel
                 WHERE benutzer_id = :benutzer_id
             ");
@@ -137,7 +137,6 @@ public function Create() {
                 email,
                 rollen_id,
                 wochenstunden,
-                urlaubstage,
                 einstellungsdatum,
                 aktiv,
                 erstellt_am,
@@ -148,7 +147,6 @@ public function Create() {
                 :email,
                 :rollen_id,
                 :wochenstunden,
-                :urlaubstage,
                 :einstellungsdatum,
                 :aktiv,
                 :erstellt_am,
@@ -161,7 +159,6 @@ public function Create() {
             'email'             => $this->email,
             'rollen_id'         => $this->rollen_id,
             'wochenstunden'     => $this->wochenstunden,
-            'urlaubstage'       => $this->urlaubstage,
             'einstellungsdatum' => $this->einstellungsdatum,
             'aktiv'             => $this->aktiv,
             'erstellt_am'       => $this->erstellt_am,
@@ -188,7 +185,6 @@ public function Update() {
                 email = :email,
                 rollen_id = :rollen_id,
                 wochenstunden = :wochenstunden,
-                urlaubstage = :urlaubstage,
                 einstellungsdatum = :einstellungsdatum,
                 aktiv = :aktiv,
                 aktualisiert_am = :aktualisiert_am
@@ -202,7 +198,6 @@ public function Update() {
             'email'             => $this->email,
             'rollen_id'         => $this->rollen_id,
             'wochenstunden'     => $this->wochenstunden,
-            'urlaubstage'       => $this->urlaubstage,
             'einstellungsdatum' => $this->einstellungsdatum,
             'aktiv'             => $this->aktiv,
             'aktualisiert_am'   => $this->aktualisiert_am
@@ -213,41 +208,23 @@ public function Update() {
     return $result;
 }
 
-public function LoadBenutzerById(PDO $pdo, int $benutzer_id): ?CBenutzer {
-    $stmt = $pdo->prepare("SELECT * FROM benutzer WHERE benutzer_id = :id");
-    $stmt->execute([':id' => $benutzer_id]);    
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row) return null;
-    $benutzer = new CBenutzer($row['benutzer_id']);
-    $benutzer->Init(
-        $row['vorname'],
-        $row['nachname'],
-        $row['email'],
-        $row['rollen_id'],
-        $row['wochenstunden'],
-        $row['urlaubstage'],
-        $row['einstellungsdatum']
-    );
-    return $benutzer;    
-}
-
 public function Load() {
     global $pdo;
     $stmt = $pdo->prepare("SELECT * FROM benutzer WHERE benutzer_id = :id");
     $stmt->execute([':id' => $this->benutzer_id]);    
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$row) return false;
+
     $this->Init(
         $row['vorname'],
         $row['nachname'],
         $row['email'],
         $row['rollen_id'],
         $row['wochenstunden'],
-        $row['urlaubstage'],
         $row['einstellungsdatum']
     );
-    $this->aktiv = $row['aktiv'];
-    $this->erstellt_am = $row['erstellt_am'];
+    $this->aktiv           = $row['aktiv'];
+    $this->erstellt_am     = $row['erstellt_am'];
     $this->aktualisiert_am = $row['aktualisiert_am'];
     return true;
 }

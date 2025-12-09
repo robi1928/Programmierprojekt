@@ -19,7 +19,6 @@ $Benutzer->Init(
     $_POST['email'],
     (int)$_POST['rolle'],
     (float)$_POST['wochenstunden'],
-    (float)$_POST['urlaubstage'],
     $_POST['einstellungsdatum']
 );
 

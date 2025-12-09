@@ -19,7 +19,12 @@ $sollstunden = $BenutzerObjekt->GetSollStundenAktuellerMonat();
 $konto      = CUrlaubskonto::loadForUserYear($pdo, $benutzerId, $jahr);
 $resturlaub = $konto ? $konto->getVerfuegbar() : 0;
 
-$iststunden = holeIststundenAktuellerMonat($pdo, $benutzerId, $monat, $jahr);
+$iststunden = CStundenzettelRepository::holeIststundenAktuellerMonat(
+    $pdo,
+    $benutzerId,
+    $monat,
+    $jahr
+);
 
 ?>
 <!doctype html>

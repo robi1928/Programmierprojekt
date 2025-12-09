@@ -6,7 +6,7 @@ class CVorgabenAuftraggeber
     private int $quartal;
     private float $erwarteteKrankenquote;
     private int $sollStunden;
-    private int $ist_Stunden;
+    private int $istStunden;
     private float $toleranz;
 
     public function __construct(
@@ -14,8 +14,8 @@ class CVorgabenAuftraggeber
         int $quartal,
         float $erwarteteKrankenquote,
         int $sollStunden,
-        int $ist_Stunden = 0,
-        float $toleranz
+        float $toleranz,
+        int $istStunden = 0
     ) {
         if ($jahr < 2000 || $jahr > 2040) {
             throw new InvalidArgumentException("Jahr muss 2000–2040 sein.");
@@ -37,42 +37,34 @@ class CVorgabenAuftraggeber
         $this->quartal = $quartal;
         $this->erwarteteKrankenquote = $erwarteteKrankenquote;
         $this->sollStunden = $sollStunden;
-        $this->ist_Stunden = $ist_Stunden; // Initialwert = 0
+        $this->istStunden = $istStunden; // Initialwert = 0
         $this->toleranz = $toleranz;
     }
 
     // Nebenrechnung
     private function RechneIstStunden(PDO $pdo): int
     {
+        $startmonat = ($this->quartal - 1) * 3 + 1;
+        $endmonat   = $startmonat + 2; // genau 3 Monate
+
         $stmt = $pdo->prepare(
-            "SELECT SUM(stundenzettel.ist_stunden) AS summeStunden
+            "SELECT SUM(ist_stunden) AS summeStunden
              FROM stundenzettel
-             WHERE stundenzettel.Jahr = :endjahr
-               AND  stundenzettel.Monat >= :startmonat 
-               AND stundenzettel.Monat <= :endmonat"
+             WHERE jahr  = :jahr
+               AND monat BETWEEN :startmonat AND :endmonat"
         );
 
-        $startmonat = ($this->quartal - 1) * 3 + 1;
-        //$startdatum = sprintf("%04d-%02d-01", $this->jahr, $startmonat);
-        $endmonat = $startmonat + 3;
-        $endjahr = $this->jahr;
-        if ($endmonat > 12) {
-            $endmonat -= 12;
-            $endjahr += 1;
-        }
-        $enddatum = sprintf("%04d-%02d-01", $endjahr, $endmonat);
-
-    $stmt->execute([
-        ':endjahr' => $endjahr,
-        ':startmonat' => $startmonat,
-        ':endmonat' => $endmonat
-    ]);
+        $stmt->execute([
+            ':jahr'       => $this->jahr,
+            ':startmonat' => $startmonat,
+            ':endmonat'   => $endmonat
+        ]);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $this->ist_Stunden = (int)($row['summeStunden'] ?? 0);
-        return $this->ist_Stunden;
-    }
+        $this->istStunden = (int)($row['summeStunden'] ?? 0);
 
+        return $this->istStunden;
+    }
 
     // GETTER
     public function GetJahr(): int { return $this->jahr; }
@@ -90,7 +82,7 @@ class CVorgabenAuftraggeber
     public function InsertIntoDB(PDO $pdo): bool
     {
         $sql = "INSERT INTO vorgabenAuftraggeber 
-            (jahr, quartal, erwarteteKrankenquote, sollStunden, ist_Stunden, toleranz)
+            (jahr, quartal, erwarteteKrankenquote, sollStunden, istStunden, toleranz)
             VALUES (:jahr, :quartal, :ekq, :soll, :ist, :tol)";
 
         $stmt = $pdo->prepare($sql);
@@ -100,7 +92,7 @@ class CVorgabenAuftraggeber
             ':quartal' => $this->quartal,
             ':ekq' => $this->erwarteteKrankenquote,
             ':soll' => $this->sollStunden,
-            ':ist' => $this->ist_Stunden,
+            ':ist' => $this->istStunden,
             ':tol' => $this->toleranz
         ]);
     }
@@ -121,12 +113,12 @@ class CVorgabenAuftraggeber
         if (!$row) return null;
 
         return new self(
-            $row['jahr'],
-            $row['quartal'],
-            $row['erwarteteKrankenquote'],
-            $row['sollStunden'],
-            ($row['ist_Stunden']?? 0),
-            $row['toleranz']
+            (int)$row['jahr'],
+            (int)$row['quartal'],
+            (float)$row['erwarteteKrankenquote'],
+            (int)$row['sollStunden'],
+            (float)$row['toleranz'],
+            (int)($row['istStunden'] ?? 0)
         );
     }
     
@@ -137,7 +129,7 @@ public function GetAnteilIstStunden(): float
         return 0.0;
     }
 
-    return ($this->ist_Stunden / $this->sollStunden) * 100.0;
+    return ($this->istStunden / $this->sollStunden) * 100.0;
 }
 
     // Danke Copilot
@@ -201,46 +193,43 @@ public static function berechneArbeitstageMitFeiertagen(int $jahr, int $quartal)
 }
 
 
+ public static function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal): int
+    {
+        $feiertage = self::feiertageSH($jahr);
 
-// ChatGPT generierte Funktion
-// Ich möchte die Arbeitstage im Quartal bis zum heutigen Datum berechnen, um die Ist-Stunden realistisch einschätzen zu können.
-public static function berechneVergangeneArbeitstageImQuartal(int $jahr, int $quartal): int
-{
-    // Feiertage laden (du hast ja bereits feiertageSH($jahr))
-    $feiertage = CVorgabenAuftraggeber::feiertageSH($jahr);
+        $startMonat = ($quartal - 1) * 3 + 1;
+        $start = new DateTime(sprintf("%04d-%02d-01", $jahr, $startMonat));
 
-    // Startmonat berechnen
-    $startMonat = ($quartal - 1) * 3 + 1;
+        // Quartalsende
+        $quartalsEnde = (clone $start)->modify("+3 months")->modify("-1 day");
 
-    // Quartalsbeginn
-    $start = new DateTime(sprintf("%04d-%02d-01", $jahr, $startMonat));
+        // Heute, aber nicht über das Quartalsende hinaus
+        $heute = new DateTime();
+        if ($heute > $quartalsEnde) {
+            $ende = $quartalsEnde;
+        } else {
+            $ende = $heute;
+        }
 
-    // Heute
-    $heute = new DateTime();
-    $ende = clone $heute;   // wir zählen bis heute (inklusive)
+        if ($ende < $start) {
+            return 0;
+        }
 
-    // Wenn "heute" vor Quartalsbeginn liegt → 0
-    if ($ende < $start) {
-        return 0;
+        $arbeitstageBisher = 0;
+
+        for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
+            $datum = $d->format("Y-m-d");
+            $wochentag = (int)$d->format("N");
+
+            if ($wochentag >= 6) continue;
+            if (in_array($datum, $feiertage, true)) continue;
+
+            $arbeitstageBisher++;
+        }
+
+        return $arbeitstageBisher;
     }
 
-    $arbeitstageBisher = 0;
-
-    for ($d = clone $start; $d <= $ende; $d->modify("+1 day")) {
-        $datum = $d->format("Y-m-d");
-        $wochentag = (int)$d->format("N"); // 1=Mo ... 7=So
-
-        // Wochenende überspringen
-        if ($wochentag >= 6) continue;
-
-        // Feiertag überspringen
-        if (in_array($datum, $feiertage, true)) continue;
-
-        $arbeitstageBisher++;
-    }
-
-    return $arbeitstageBisher;
-}
 
 
 
@@ -248,8 +237,8 @@ public static function berechneVergangeneArbeitstageImQuartal(int $jahr, int $qu
 // Ich möchte den prozentualen Anteil der vergangenen Arbeitstage im Quartal berechnen, im Vergleich zu den insgesamt verfügbaren Arbeitstagen.
 public static function prozentualeVergangeneArbeitstageImQuartal(int $jahr, int $quartal): float
     {
-        $vergangeneArbeitstage = CVorgabenAuftraggeber::berechneVergangeneArbeitstageImQuartal($jahr, $quartal);
-        $insgesamtArbeitstage = CVorgabenAuftraggeber::berechneArbeitstageMitFeiertagen($jahr, $quartal);
+        $vergangeneArbeitstage = self::berechneVergangeneArbeitstageImQuartal($jahr, $quartal);
+        $insgesamtArbeitstage  = self::berechneArbeitstageMitFeiertagen($jahr, $quartal);
 
         if ($insgesamtArbeitstage === 0) {
             return 0.0;
@@ -266,11 +255,11 @@ public function BedarfPlanstundenBisEndeQuartal(): array
     $toleranz = $this->Toleranzbereich();
     $minimum = $toleranz['min'];
     $maximum = $toleranz['max'];
-    $ist_Stunden = $this->GetIstStunden();  
+    $istStunden = $this->GetIstStunden();  
     $erwarteteKrankenquote = $this->GetErwarteteKrankenquote();
 
-    $bedarfMin = ($minimum - $ist_Stunden) * (1 + $erwarteteKrankenquote / 100);
-    $bedarfMax = ($maximum - $ist_Stunden) * (1 + $erwarteteKrankenquote / 100);
+    $bedarfMin = ($minimum - $istStunden) * (1 + $erwarteteKrankenquote / 100);
+    $bedarfMax = ($maximum - $istStunden) * (1 + $erwarteteKrankenquote / 100);
 
     return [
         'bis_min' => $bedarfMin,

@@ -29,7 +29,6 @@ $Benutzer->Init(
     $_GET['email'],
     (int)$_GET['rolle'],
     (float)$_GET['wochenstunden'],
-    (float)$_GET['urlaubstage'],
     $_GET['einstellungsdatum']
 );
 $result = $Benutzer->Create();
