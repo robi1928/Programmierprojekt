@@ -25,7 +25,7 @@ $benutzer = aktueller_benutzer();
     <a class="btn primary" href="dd_nutzer_aktualisieren_teamleitung.php">Nutzer aktualisieren</a>
     <a class="btn primary" href="dd_erfassung_teamleitung.php">Arbeitszeit erfassen</a>
     <a class="btn primary" href="dd_freigaben_teamleitung.php">Arbeitszeiten freigeben</a>    
-    <a class="btn primary" href="dd_monatsuebersicht.php">Monatsübersicht</a>
+    <a class="btn primary" href="dd_monatsuebersicht_leitung.php">Monatsübersicht</a>
   </div>
 </body>
 </html>
