@@ -7,3 +7,4 @@ Für V2:
 - Exportmöglichkeit der Daten
 - Archiv vergangener Quartale
 - Modus Farbenblindheit
+- Team & Projektleiter bei Urlaubsantragsannahme neues Urlaubskonto erstellen (falls notwendig)
