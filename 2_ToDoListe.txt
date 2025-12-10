@@ -1,6 +1,9 @@
-ToDo Liste:
+Für V2:
 - Seiten skalierbar machen -> prozentual
 - Mobilansicht
 - Mobil gedreht sicht
 - Zeitzone fest rein
-- dashboard aufs hauptmenü heben, bei admin und teamleiter
+- Abgelehnte Anträge zur Wiedervorlage
+- Exportmöglichkeit der Daten
+- Archiv vergangener Quartale
+- Modus Farbenblindheit
