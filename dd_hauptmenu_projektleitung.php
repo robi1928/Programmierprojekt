@@ -42,7 +42,7 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
     <a class="btn primary" href="dd_nutzer_aktualisieren_projektleitung.php">Nutzer aktualisieren</a>
     <a class="btn primary" href="dd_erfassung_projektleitung.php">Arbeitszeit erfassen</a>
     <a class="btn primary" href="dd_freigaben_projektleitung.php">Arbeitszeiten freigeben</a>
-    <a class="btn primary" href="dd_monatsuebersicht_leitung.php">Monatsübersicht</a>
+    <a class="btn primary" href="dd_monatsuebersicht_projektleitung.php">Monatsübersicht</a>
   </div>
     <br>
   </ul>
