@@ -3,11 +3,12 @@ require_once __DIR__ . '/bb_auth.php';
 require_once 'bb_db.php';
 require_once 'cc_stundenzettel.php';
 require_once 'cc_urlaubsantraege.php';
+require_once 'cc_urlaubskonten.php';
 rolle_erforderlich(ROLLE_MITARBEITER);
 modus_aus_url_setzen();
 
-$aktuellerBenutzerId = (int)$_SESSION['benutzer'];
-$benutzer   = aktueller_benutzer();
+$aktuellerBenutzerId = (int)$_SESSION['benutzer']['id'];
+$benutzer            = aktueller_benutzer();
 
 $meldungOk    = null;
 $meldungFehler = null;
@@ -90,6 +91,7 @@ $sqlUrlaub = "
         a.ende_datum,
         a.tage,
         a.eingereicht_am,
+        a.bemerkung,
         e.vorname AS einreicher_vorname,
         e.nachname AS einreicher_nachname
     FROM urlaubsantraege a
@@ -113,6 +115,32 @@ $stmtUrlaub = $pdo->prepare($sqlUrlaub);
 $stmtUrlaub->execute([':uid' => $aktuellerBenutzerId]);
 $offeneUrlaube = $stmtUrlaub->fetchAll(PDO::FETCH_ASSOC);
 
+// Abgelehnte Urlaubsanträge für diesen Mitarbeiter laden
+$sqlUrlaubAbgelehnt = "
+    SELECT
+        a.antrag_id,
+        a.start_datum,
+        a.ende_datum,
+        a.tage,
+        a.entschieden_am,
+        a.bemerkung,
+        e.vorname AS entscheider_vorname,
+        e.nachname AS entscheider_nachname
+    FROM urlaubsantraege a
+    JOIN benutzer b_antragsteller
+      ON b_antragsteller.benutzer_id = a.benutzer_id
+    LEFT JOIN benutzer e
+      ON e.benutzer_id = a.entschieden_von
+    WHERE a.benutzer_id = :uid
+      AND a.status      = 'abgelehnt'
+    ORDER BY a.entschieden_am DESC, a.start_datum DESC
+";
+
+$stmtUrlaubAbgelehnt = $pdo->prepare($sqlUrlaubAbgelehnt);
+$stmtUrlaubAbgelehnt->execute([':uid' => $aktuellerBenutzerId]);
+$abgelehnteUrlaube = $stmtUrlaubAbgelehnt->fetchAll(PDO::FETCH_ASSOC);
+
+
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
@@ -123,9 +151,8 @@ $offeneUrlaube = $stmtUrlaub->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
   <h1>Arbeitszeit & Urlaub freigeben</h1>
-  <p>Angemeldet: <?= htmlspecialchars($benutzer['name']) ?> (<?= htmlspecialchars($benutzer['rolle']) ?>)</p>
-  <nav>
-    <a href="bb_ausloggen.php">Abmelden</a>
+  <nav class="menu">
+    <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
  </header>
@@ -181,15 +208,18 @@ $offeneUrlaube = $stmtUrlaub->fetchAll(PDO::FETCH_ASSOC);
                             <?= htmlspecialchars($sz['eingereicht_am'], ENT_QUOTES, 'UTF-8') ?>
                         </td>
                         <td>
-                            <form method="post" style="display:inline">
+                            <form method="post">
                                 <input type="hidden" name="typ" value="stundenzettel">
                                 <input type="hidden" name="id" value="<?= (int)$sz['stundenzettel_id'] ?>">
-                                <button class="btn primary" type="submit" name="entscheidung" value="genehmigt">
-                                    Bestätigen
-                                </button>
-                                <button class="btn" type="submit" name="entscheidung" value="abgelehnt">
-                                    Ablehnen
-                                </button>
+
+                                <div class="actions-vertical">
+                                    <button class="btn primary" type="submit" name="entscheidung" value="genehmigt">
+                                        Bestätigen
+                                    </button>
+                                    <button class="btn" type="submit" name="entscheidung" value="abgelehnt">
+                                        Ablehnen
+                                    </button>
+                                </div>
                             </form>
                         </td>
                     </tr>
@@ -230,17 +260,19 @@ $offeneUrlaube = $stmtUrlaub->fetchAll(PDO::FETCH_ASSOC);
                         </td>
                         <td><?= htmlspecialchars($ua['eingereicht_am'], ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
+                            <?php if (!empty($ua['bemerkung'])): ?>
+                                <?= htmlspecialchars($ua['bemerkung'], ENT_QUOTES, 'UTF-8') ?>
+                            <?php else: ?>
+                                <span class="note">Keine Bemerkung hinterlegt.</span>
+                            <?php endif; ?>
+                        </td>
+
+                        <td>
                             <form method="post">
                                 <input type="hidden" name="typ" value="urlaub">
                                 <input type="hidden" name="id" value="<?= (int)$ua['antrag_id'] ?>">
 
-                                <textarea
-                                    name="bemerkung"
-                                    rows="1"
-                                    style="width:100%;font-size:.85rem"
-                                    placeholder="Optionale Bemerkung zur Entscheidung"></textarea>
-
-                                <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                                <div class="actions-vertical">
                                     <button class="btn primary" type="submit" name="entscheidung" value="genehmigt">
                                         Bestätigen
                                     </button>
@@ -249,6 +281,63 @@ $offeneUrlaube = $stmtUrlaub->fetchAll(PDO::FETCH_ASSOC);
                                     </button>
                                 </div>
                             </form>
+                        </td>
+
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+    <div class="card" style="margin-top:24px">
+        <h2>Abgelehnte Urlaubsanträge</h2>
+        <p class="note">
+            Wenn Sie Fragen zu einer Ablehnung haben, sprechen Sie bitte die Person an,
+            die Ihren Antrag abgelehnt hat.
+        </p>
+
+        <?php if (empty($abgelehnteUrlaube)): ?>
+            <p class="note">Es liegen aktuell keine abgelehnten Urlaubsanträge vor.</p>
+        <?php else: ?>
+            <table class="monatsuebersicht monatsuebersicht--compact">
+                <thead>
+                <tr>
+                    <th>Zeitraum</th>
+                    <th>Tage</th>
+                    <th>Abgelehnt von</th>
+                    <th>Abgelehnt am</th>
+                    <th>Bemerkung</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($abgelehnteUrlaube as $ua): ?>
+                    <tr>
+                        <td>
+                            <?= htmlspecialchars($ua['start_datum'], ENT_QUOTES, 'UTF-8') ?>
+                            &ndash;
+                            <?= htmlspecialchars($ua['ende_datum'], ENT_QUOTES, 'UTF-8') ?>
+                        </td>
+                        <td><?= htmlspecialchars($ua['tage'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td>
+                            <?php if (!empty($ua['entscheider_vorname']) || !empty($ua['entscheider_nachname'])): ?>
+                                <?= htmlspecialchars(
+                                    trim($ua['entscheider_vorname'] . ' ' . $ua['entscheider_nachname']),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            <?php else: ?>
+                                <span class="note">Keine Person hinterlegt.</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?= htmlspecialchars($ua['entschieden_am'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($ua['bemerkung'])): ?>
+                                <?= htmlspecialchars($ua['bemerkung'], ENT_QUOTES, 'UTF-8') ?>
+                            <?php else: ?>
+                                <span class="note">Keine Bemerkung hinterlegt.</span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

@@ -295,9 +295,44 @@ final class CUrlaubsantragRepository
         $start      = new \DateTimeImmutable($antrag->getStartDatum());
         $ende       = new \DateTimeImmutable($antrag->getEndeDatum());
 
-        // Urlaubskonto buchen
         $jahrStart = (int)$start->format('Y');
-        $konto     = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahrStart);
+
+        // Versuch: Urlaubskonto für dieses Jahr exklusiv locken
+        try {
+            $konto = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahrStart);
+        } catch (\RuntimeException $e) {
+            $konto = null;
+        }
+
+        // Wenn es KEIN Urlaubskonto gibt → neu anlegen
+        if ($konto === null) {
+            // Versuche, den Anspruch aus dem letzten vorhandenen Urlaubskonto zu übernehmen
+            $stmt = $pdo->prepare("
+                SELECT anspruch_tage
+                FROM urlaubskonten
+                WHERE benutzer_id = :bid
+                ORDER BY jahr DESC
+                LIMIT 1
+            ");
+            $stmt->execute([':bid' => $benutzerId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($row) {
+                $anspruch = (float)$row['anspruch_tage'];
+            } else {
+                // Fallback, falls es noch nie ein Konto gab – ggf. Wert anpassen
+                $anspruch = 30.0;
+            }
+
+            $konto = CUrlaubskonto::create(
+                $pdo,
+                $benutzerId,
+                $jahrStart,
+                $anspruch
+            );
+        }
+
+        // Urlaub aus dem Antrag auf dem Urlaubskonto buchen
         $konto->bucheUrlaub($pdo, $antrag->getTage());
 
         // Urlaub auf Monate verteilen

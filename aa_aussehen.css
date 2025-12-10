@@ -582,3 +582,15 @@ html[data-theme="dark"] .tag-heute-label {
     background: #141821;
   }
 }
+
+.actions-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.actions-vertical .btn {
+    width: 100%;
+    text-align: center;
+}
