@@ -1,7 +1,7 @@
 <?php
-// -------------------
+// ------------------
 // Datenbank-Verbindung
-// -------------------
+// ------------------
 $servername = "localhost";
 $username   = "root"; // XAMPP-Standard
 $password   = "";
