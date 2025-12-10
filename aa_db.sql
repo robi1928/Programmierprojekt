@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS vorgabenAuftraggeber;
 -- Rollen-Tabelle: definiert, welche Arten von Benutzer*innen es gibt
 CREATE TABLE rollen (
   rollen_id       TINYINT PRIMARY KEY,
-  rollen_schluessel ENUM('mitarbeiter','teamleitung','projektleitung') NOT NULL UNIQUE
+  rollen_schluessel ENUM('Mitarbeiter','Teamleitung','Projektleitung') NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; -- nicht in Vorlage von Heimann. Eingebaut, damit wirklich alle Zeichen möglich. Überlegen, ob als Datenbank default setzen (spart wahrscheinlich Zeilen)
 
 -- Benutzer-Tabelle
@@ -52,6 +52,7 @@ CREATE TABLE stundenzettel (
   jahr             SMALLINT NOT NULL CHECK (jahr BETWEEN 2000 AND 2040) /*check sicherte Wertebereich*/,
   status           ENUM('entwurf','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
   eingereicht_am   DATETIME NULL,
+  eingereicht_von  INT NULL,
   genehmigt_von    INT NULL,
   genehmigt_am     DATETIME NULL,
   erstellt_am      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,9 +61,10 @@ CREATE TABLE stundenzettel (
   ist_stunden      DECIMAL(6,2) NOT NULL DEFAULT 0.00,
   saldo_stunden    DECIMAL(6,2) AS (ist_stunden - soll_stunden) STORED,
   urlaub_gesamt    DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-  UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr) /*verhindert doppelte Einträge*/,
-  FOREIGN KEY (benutzer_id)   REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
-  FOREIGN KEY (genehmigt_von) REFERENCES benutzer(benutzer_id)
+  UNIQUE KEY uq_benutzer_monat_jahr (benutzer_id, monat, jahr),
+  FOREIGN KEY (benutzer_id)      REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
+  FOREIGN KEY (eingereicht_von)  REFERENCES benutzer(benutzer_id),
+  FOREIGN KEY (genehmigt_von)    REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Zeiteinträge (Details pro Tag)
@@ -97,14 +99,16 @@ CREATE TABLE urlaubsantraege (
   tage           DECIMAL(5,2) NOT NULL,
   status         ENUM('entwurf','genehmigt','abgelehnt') NOT NULL DEFAULT 'entwurf',
   eingereicht_am DATETIME NULL,
+  eingereicht_von INT NULL,
   entschieden_von INT NULL,
   entschieden_am  DATETIME NULL,
   bemerkung       VARCHAR(500) NULL,
   erstellt_am     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   aktualisiert_am TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CHECK (ende_datum >= start_datum),
-  FOREIGN KEY (benutzer_id)     REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
-  FOREIGN KEY (entschieden_von) REFERENCES benutzer(benutzer_id)
+  FOREIGN KEY (benutzer_id)      REFERENCES benutzer(benutzer_id) ON DELETE CASCADE,
+  FOREIGN KEY (eingereicht_von)  REFERENCES benutzer(benutzer_id),
+  FOREIGN KEY (entschieden_von)  REFERENCES benutzer(benutzer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabelle der Quartals Vorgaben.

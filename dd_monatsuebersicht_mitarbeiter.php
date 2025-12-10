@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/bb_auth.php';
-
 rolle_erforderlich(ROLLE_MITARBEITER);
 modus_aus_url_setzen();
 
@@ -11,136 +10,83 @@ require_once __DIR__ . '/cc_zeiteintraege.php';
 require_once __DIR__ . '/cc_urlaubskonten.php';
 require_once __DIR__ . '/cc_urlaubsantraege.php';
 
-$benutzer = aktueller_benutzer();
-
-// Benutzernummer robust aus Fachklasse/Array/Objekt holen
-$benutzerId = null;
-if ($benutzer instanceof CBenutzer) {
-    $benutzerId = (int)$benutzer->GetID();
-} elseif (is_array($benutzer)) {
-    $benutzerId = isset($benutzer['benutzer_id'])
-        ? (int)$benutzer['benutzer_id']
-        : (isset($benutzer['id']) ? (int)$benutzer['id'] : null);
-} elseif (is_object($benutzer)) {
-    $benutzerId = isset($benutzer->benutzer_id)
-        ? (int)$benutzer->benutzer_id
-        : (isset($benutzer->id) ? (int)$benutzer->id : null);
-}
-
+$benutzer   = aktueller_benutzer();
+$benutzerId = CBenutzerHelper::ermittleIdAusKontext($benutzer);
 if ($benutzerId === null) {
     die('Fehler: Benutzer-ID nicht im Kontext gefunden. Bitte neu anmelden.');
 }
 
-// Aktuelles Quartal bestimmen
-$heute  = new DateTimeImmutable('today');
-$jahr   = (int)$heute->format('Y');
-$monat  = (int)$heute->format('n');
-$quartal = (int)ceil($monat / 3);
+$heute = new DateTimeImmutable('today');
+$model = CStundenzettelRepository::monatsuebersichtQuartal($pdo, $benutzerId, $heute);
 
-// Start/Ende des Quartals
-$quartalStartMonat = (($quartal - 1) * 3) + 1;
-$quartalStart = new DateTimeImmutable(sprintf('%04d-%02d-01', $jahr, $quartalStartMonat));
-$quartalEnde  = $quartalStart->modify('+3 months')->modify('-1 day');
+$jahr          = $model['jahr'];
+$quartal       = $model['quartal'];
+$tage          = $model['tage'];
+$quartalSummen = $model['quartalSummen'];
 
-// Feiertage-Funktion (rein fachlich, keine DB)
-function getFeiertage(int $jahr): array
-{
-    $feiertage = [
-        sprintf('%04d-01-01', $jahr), // Neujahr
-        sprintf('%04d-05-01', $jahr), // 1. Mai
-        sprintf('%04d-10-03', $jahr), // Tag der dt. Einheit
-        sprintf('%04d-12-25', $jahr), // 1. Weihnachtstag
-        sprintf('%04d-12-26', $jahr), // 2. Weihnachtstag
-    ];
-
-    $ostersonntag = date('Y-m-d', easter_date($jahr));
-    $feiertage[] = date('Y-m-d', strtotime($ostersonntag . ' -2 days')); // Karfreitag
-    $feiertage[] = date('Y-m-d', strtotime($ostersonntag . ' +1 day')); // Ostermontag
-    $feiertage[] = date('Y-m-d', strtotime($ostersonntag . ' +39 days')); // Himmelfahrt
-    $feiertage[] = date('Y-m-d', strtotime($ostersonntag . ' +50 days')); // Pfingstmontag
-
-    return $feiertage;
-}
-
-$feiertage = getFeiertage($jahr);
-
-// Summen über Repositories holen (nur eigener Benutzer)
-function ermittleTageswerte(PDO $pdo, int $benutzerId, DateTimeInterface $tag): array
-{
-    $stunden = CZeiteintragRepository::summeStundenProTag($pdo, $benutzerId, $tag);
-    $urlaubCnt = CUrlaubsantragRepository::anzahlGenehmigteUrlaubsantraegeAmTag($pdo, $benutzerId, $tag);
-
-    // Krankheit aktuell: noch keine fachliche DB-Logik, daher 0
-    $krank = 0;
-
-    return [
-        'stunden' => $stunden,
-        'urlaub'  => $urlaubCnt,
-        'krank'   => $krank,
-    ];
-}
-
-// Daten für Anzeige vorbereiten
-$quartalSummen = ['stunden' => 0.0, 'urlaub' => 0, 'krank' => 0];
-$monatSummen   = ['stunden' => 0.0, 'urlaub' => 0, 'krank' => 0];
-
-$aktuellerMonat = (int)$quartalStart->format('n');
-
-// Wir laufen über alle Tage im Quartal und erzeugen eine Struktur,
-// damit das HTML unten sauber arbeiten kann.
-$tage = [];
-
-for ($tag = $quartalStart; $tag <= $quartalEnde; $tag = $tag->modify('+1 day')) {
-    $datumSql     = $tag->format('Y-m-d');
-    $datumAnzeige = $tag->format('d.m.Y');
-    $wochentag    = (int)$tag->format('N'); // 6=Sa, 7=So
-
-    $werte = ermittleTageswerte($pdo, $benutzerId, $tag);
-
-    $monatSummen['stunden'] += $werte['stunden'];
-    $monatSummen['urlaub']  += $werte['urlaub'];
-    $monatSummen['krank']   += $werte['krank'];
-
-    $quartalSummen['stunden'] += $werte['stunden'];
-    $quartalSummen['urlaub']  += $werte['urlaub'];
-    $quartalSummen['krank']   += $werte['krank'];
-
-    $istWochenendeOderFeiertag = ($wochentag >= 6) || in_array($datumSql, $feiertage, true);
-
-    // Ermitteln, ob nach diesem Tag ein Monatswechsel stattfindet
-    $naechsterTag = $tag->modify('+1 day');
-    $monatWechsel = ((int)$naechsterTag->format('n') !== $aktuellerMonat) || ($tag == $quartalEnde);
-
-    $tage[] = [
-        'datum_sql'        => $datumSql,
-        'datum_anzeige'    => $datumAnzeige,
-        'monat'            => $aktuellerMonat,
-        'werte'            => $werte,
-        'ist_feiertag_od'  => $istWochenendeOderFeiertag,
-        'monat_wechsel'    => $monatWechsel,
-        // Referenzen für Summenzeile (werden beim Monatswechsel genutzt)
-        'monat_summen_ref' => $monatSummen,
-    ];
-
-    if ($monatWechsel) {
-        // Summen merken und für nächsten Monat zurücksetzen
-        $tage[] = [
-            'monat_summe' => [
-                'monat'   => $aktuellerMonat,
-                'jahr'    => $jahr,
-                'stunden' => $monatSummen['stunden'],
-                'urlaub'  => $monatSummen['urlaub'],
-                'krank'   => $monatSummen['krank'],
-            ],
-        ];
-
-        // Trenner-Zeile
-        $tage[] = ['trenner' => true];
-
-        $monatSummen = ['stunden' => 0.0, 'urlaub' => 0, 'krank' => 0];
-        $aktuellerMonat = (int)$naechsterTag->format('n');
+$monatsDaten = [];
+foreach ($tage as $t) {
+    if (isset($t['trenner']) && $t['trenner'] === true) {
+        continue;
+    }
+    if (isset($t['monat_summe'])) {
+        $m = (int)$t['monat_summe']['monat'];
+        $monatsDaten[$m]['summe'] = $t['monat_summe'];
+        continue;
+    }
+    if (isset($t['monat'])) {
+        $m = (int)$t['monat'];
+        $monatsDaten[$m]['tage'][] = $t;
     }
 }
+
+$quartalKrankSumme = 0;
+
+foreach ($monatsDaten as $monatNummer => &$daten) {
+    // Krankheitstage für diesen Monat holen
+    $krankProTag = CZeiteintragRepository::ermittleKrankheitstagefuerMonatsuebersicht(
+        $pdo,
+        $benutzerId,
+        $monatNummer,
+        $jahr
+    );
+
+    // Für später im Template speichern
+    $daten['krankProTag'] = $krankProTag;
+
+    // Monatssumme = Anzahl der Tage mit krank = 1
+    $monatKrankSumme = array_sum($krankProTag);
+
+    // Falls noch keine Summe existiert, Grundgerüst anlegen
+    if (!isset($daten['summe'])) {
+        $daten['summe'] = [
+            'stunden' => 0,
+            'urlaub'  => 0,
+            'krank'   => 0,
+            'monat'   => $monatNummer,
+            'jahr'    => $jahr,
+        ];
+    }
+
+    // Krank-Summe im Monat hinterlegen
+    $daten['summe']['krank'] = $monatKrankSumme;
+
+    // Quartalssumme aufaddieren
+    $quartalKrankSumme += $monatKrankSumme;
+}
+unset($daten);
+$quartalSummen['krank'] = $quartalKrankSumme;
+
+$monatsnamen = [
+    1 => 'Januar', 2 => 'Februar', 3 => 'März',
+    4 => 'April', 5 => 'Mai', 6 => 'Juni',
+    7 => 'Juli', 8 => 'August', 9 => 'September',
+    10 => 'Oktober', 11 => 'November', 12 => 'Dezember',
+];
+
+$aktuellerMonatJetzt = (int)$heute->format('n');
+$heuteSql            = $heute->format('Y-m-d');
+
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
@@ -150,55 +96,129 @@ for ($tag = $quartalStart; $tag <= $quartalEnde; $tag = $tag->modify('+1 day')) 
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-  <h1>Eigene Monatsübersicht – Quartal <?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></h1>
-
+<header class="page-header">
+  <h1>Monatsübersicht – Quartal <?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></h1>
   <nav class="menu">
     <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
+</header>
 
-  <table class="monatsuebersicht">
-    <thead>
-      <tr>
-        <th>Datum</th>
-        <th>Stunden</th>
-        <th>Urlaubstage</th>
-        <th>Krank</th>
-      </tr>
-    </thead>
-    <tbody>
-    <?php foreach ($tage as $t): ?>
-        <?php if (isset($t['trenner']) && $t['trenner'] === true): ?>
-          <tr class="row-separator">
-            <td colspan="4">&nbsp;</td>
-          </tr>
-        <?php elseif (isset($t['monat_summe'])): ?>
-          <tr class="row-summe-monat">
-            <td>Summe Monat <?= h(sprintf('%02d.%04d', $t['monat_summe']['monat'], $t['monat_summe']['jahr'])) ?></td>
-            <td><?= h(number_format($t['monat_summe']['stunden'], 2, ',', '.')) ?></td>
-            <td><?= h((string)$t['monat_summe']['urlaub']) ?></td>
-            <td><?= h((string)$t['monat_summe']['krank']) ?></td>
-          </tr>
-        <?php else: ?>
-          <?php
-            $werte  = $t['werte'];
-            $klasse = $t['ist_feiertag_od'] ? 'tag-feiertag' : 'tag-werktag';
-          ?>
-          <tr class="<?= $klasse ?>">
-            <td><?= h($t['datum_anzeige']) ?></td>
-            <td><?= h(number_format($werte['stunden'], 2, ',', '.')) ?></td>
-            <td><?= h((string)$werte['urlaub']) ?></td>
-            <td><?= h((string)$werte['krank']) ?></td>
-          </tr>
-        <?php endif; ?>
+<main>
+  <section class="quartal-block">
+    <h2>Quartalsübersicht</h2>
+    <table class="monatsuebersicht monatsuebersicht--compact">
+      <thead>
+        <tr>
+          <th>Quartal/Jahr</th>
+          <th>Stunden</th>
+          <th>Urlaubstage</th>
+          <th>Krank</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-summe-quartal">
+          <td>Q<?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></td>
+          <td><?= h(number_format($quartalSummen['stunden'], 2, ',', '.')) ?></td>
+          <td><?= h((string)$quartalSummen['urlaub']) ?></td>
+          <td><?= h((string)$quartalSummen['krank']) ?></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="months">
+    <h2>Monate im Quartal</h2>
+
+    <?php foreach ($monatsDaten as $monatNummer => $daten): ?>
+      <?php
+        $summe = $daten['summe'] ?? [
+            'stunden' => 0,
+            'urlaub'  => 0,
+            'krank'   => 0,
+            'monat'   => $monatNummer,
+            'jahr'    => $jahr,
+        ];
+        $monatName = $monatsnamen[$monatNummer] ?? ('Monat ' . $monatNummer);
+        $openAttr  = ($monatNummer === $aktuellerMonatJetzt) ? ' open' : '';
+        $krankProTag = CZeiteintragRepository::ermittleKrankheitstagefuerMonatsuebersicht(
+            $pdo,
+            $benutzerId,
+            $monatNummer,
+            $jahr
+        );
+    ?>
+    <details class="month"<?= $openAttr ?>>
+        <summary class="month__header">
+          <span class="month__title">
+            <?= h($monatName) ?> <?= h((string)$jahr) ?>
+          </span>
+          <span class="month__summary-values">
+            <span><?= h(number_format($summe['stunden'], 2, ',', '.')) ?> h</span>
+            <span><?= h((string)$summe['urlaub']) ?> Urlaub</span>
+            <span><?= h((string)$summe['krank']) ?> Krank</span>
+          </span>
+        </summary>
+
+        <div class="month__body">
+          <?php if (empty($daten['tage'])): ?>
+            <p class="note">Keine Einträge in diesem Monat.</p>
+          <?php else: ?>
+            <table class="monatsuebersicht">
+              <caption>Einträge im <?= h($monatName) ?> <?= h((string)$jahr) ?></caption>
+              <thead>
+                <tr>
+                  <th>Datum</th>
+                  <th>Stunden</th>
+                  <th>Urlaub</th>
+                  <th>Krank</th>
+                </tr>
+              </thead>
+              <tbody>
+              <?php foreach ($daten['tage'] as $t): ?>
+                <?php
+                  $werte       = $t['werte'];
+
+                  // Flag aus DB-Mapping ergänzen (0 oder 1)
+                  $werte['krank'] = $krankProTag[$t['datum_sql']] ?? 0;
+
+                  $istFeiertag = $t['ist_feiertag_od'];
+                  $istHeute    = ($t['datum_sql'] === $heuteSql);
+                  $rowClasses  = [];
+                  if ($istFeiertag) { $rowClasses[] = 'tag-feiertag'; }
+                  else              { $rowClasses[] = 'tag-werktag'; }
+                  if ($istHeute)    { $rowClasses[] = 'tag-heute'; }
+                  $rowClass = implode(' ', $rowClasses);
+                ?>
+                <tr class="<?= h($rowClass) ?>">
+                  <td>
+                    <time datetime="<?= h($t['datum_sql']) ?>">
+                      <?= h($t['datum_anzeige']) ?>
+                    </time>
+                    <?php if ($istHeute): ?>
+                      <span class="tag-heute-label">(heute)</span>
+                    <?php endif; ?>
+                  </td>
+                  <td><?= h(number_format($werte['stunden'], 2, ',', '.')) ?></td>
+                  <td><?= h((string)$werte['urlaub']) ?></td>
+                  <td><?= h((string)$werte['krank']) ?></td>
+                </tr>
+              <?php endforeach; ?>
+              </tbody>
+              <tfoot>
+                <tr class="row-summe-monat">
+                  <th>Summe Monat</th>
+                  <td><?= h(number_format($summe['stunden'], 2, ',', '.')) ?></td>
+                  <td><?= h((string)$summe['urlaub']) ?></td>
+                  <td><?= h((string)$summe['krank']) ?></td>
+                </tr>
+              </tfoot>
+            </table>
+          <?php endif; ?>
+        </div>
+      </details>
     <?php endforeach; ?>
-      <tr class="row-summe-quartal">
-        <td>Summe Quartal <?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></td>
-        <td><?= h(number_format($quartalSummen['stunden'], 2, ',', '.')) ?></td>
-        <td><?= h((string)$quartalSummen['urlaub']) ?></td>
-        <td><?= h((string)$quartalSummen['krank']) ?></td>
-      </tr>
-    </tbody>
-  </table>
+  </section>
+</main>
 </body>
 </html>

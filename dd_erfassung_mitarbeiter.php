@@ -40,8 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($benutzerId === null) {
             throw new RuntimeException('Benutzerkontext fehlt. Bitte neu anmelden.');
         }
-        CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $benutzerId, $maxDate);
+
+        // erfasse() liefert die stundenzettel_id zurück
+        $szId = CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $benutzerId, $maxDate);
         $msg = 'Eintrag gespeichert.';
+
     } catch (Throwable $e) {
         $err = $e->getMessage();
     }
@@ -139,7 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div>
-      <button class="btn primary" type="submit">Speichern</button>
+      <button class="btn primary" type="submit" name="aktion" value="speichern">
+        Speichern
+      </button>
+
       <a class="btn" href="?">Zurücksetzen</a>
     </div>
 

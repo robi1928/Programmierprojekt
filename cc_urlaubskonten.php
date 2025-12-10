@@ -13,7 +13,7 @@ class CUrlaubskonto
         $this->benutzer_id   = 0;
         $this->jahr          = (int)date('Y');
         $this->anspruch_tage = 0.0;
-        $this->genutzt_tage   = 0.0;
+        $this->genutzt_tage  = 0.0;
     }
 
     // Statische Loader / Factory-Methoden
@@ -75,7 +75,7 @@ class CUrlaubskonto
         PDO $pdo,
         int $benutzerId,
         int $jahr,
-        float $anspruchTage,
+        float $anspruchTage
     ): CUrlaubskonto {
         $sql = "INSERT INTO urlaubskonten
                   (benutzer_id, jahr, anspruch_tage, genutzt_tage)

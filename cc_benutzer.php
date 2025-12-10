@@ -81,20 +81,24 @@ private function LadeStundenzettel() {
         try {
             global $pdo;
             $statement = $pdo->prepare("
-                SELECT 
-                    stundenzettel_id,
-                    benutzer_id,
-                    monat,
-                    jahr,
-                    status,
-                    soll_stunden,
-                    ist_stunden,
-                    saldo_stunden,
-                    urlaub_gesamt,
-                    erstellt_am,
-                    aktualisiert_am
-                FROM stundenzettel
-                WHERE benutzer_id = :benutzer_id
+            SELECT 
+                stundenzettel_id,
+                benutzer_id,
+                monat,
+                jahr,
+                status,
+                eingereicht_am,
+                eingereicht_von,
+                genehmigt_von,
+                genehmigt_am,
+                soll_stunden,
+                ist_stunden,
+                saldo_stunden,
+                urlaub_gesamt,
+                erstellt_am,
+                aktualisiert_am
+            FROM stundenzettel
+            WHERE benutzer_id = :benutzer_id
             ");
             $statement->execute(['benutzer_id' => $this->benutzer_id]);
             $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -273,6 +277,33 @@ public function GetSollStundenAktuellerMonat(): int {
     return (int)round($stundenProTag * $arbeitstageImMonat);
 }
 
+}
+
+class CBenutzerHelper
+{
+    public static function ermittleIdAusKontext($benutzer): ?int
+    {
+        if ($benutzer instanceof CBenutzer) {
+            return (int)$benutzer->GetID();
+        }
+        if (is_array($benutzer)) {
+            if (isset($benutzer['benutzer_id'])) {
+                return (int)$benutzer['benutzer_id'];
+            }
+            if (isset($benutzer['id'])) {
+                return (int)$benutzer['id'];
+            }
+        }
+        if (is_object($benutzer)) {
+            if (isset($benutzer->benutzer_id)) {
+                return (int)$benutzer->benutzer_id;
+            }
+            if (isset($benutzer->id)) {
+                return (int)$benutzer->id;
+            }
+        }
+        return null;
+    }
 }
 
 // passt hier eigentlich nicht richtig, aber benutzer.php wird eigentlich immer mit aufgerufen. Damit nicht auf html Seite

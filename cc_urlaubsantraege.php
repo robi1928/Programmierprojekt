@@ -17,16 +17,16 @@ class CUrlaubsantrag
     private ?int $antrag_id = null;
     private int $benutzer_id;
     private string $start_datum;      // Y-m-d
-    private string $ende_datum;       // Y-m-d
+    private string $ende_datum;
     private float $tage;
-    private string $status = 'entwurf'; // 'entwurf','genehmigt','abgelehnt','storniert'
-    private ?string $eingereicht_am = null;   // DATETIME (hier: Anlege-/Beantragungszeitpunkt)
+    private string $status = 'entwurf'; // 'entwurf','genehmigt','abgelehnt'
+    private ?string $eingereicht_am = null;
+    private ?int $eingereicht_von   = null;
     private ?int $entschieden_von   = null;
-    private ?string $entschieden_am = null;   // DATETIME
+    private ?string $entschieden_am = null;
     private ?string $bemerkung      = null;
-    private ?string $erstellt_am    = null;   // TIMESTAMP (DB-seitig gepflegt)
-    private ?string $aktualisiert_am = null;  // TIMESTAMP (DB-seitig gepflegt)
-
+    private ?string $erstellt_am    = null;
+    private ?string $aktualisiert_am = null;
     public function __construct(
         int $benutzerId,
         string $startDatum,
@@ -70,6 +70,7 @@ class CUrlaubsantrag
         $obj->antrag_id       = (int)$row['antrag_id'];
         $obj->status          = (string)$row['status'];
         $obj->eingereicht_am  = $row['eingereicht_am'] ?? null;
+        $obj->eingereicht_von = $row['eingereicht_von'] !== null ? (int)$row['eingereicht_von'] : null;
         $obj->entschieden_von = $row['entschieden_von'] !== null ? (int)$row['entschieden_von'] : null;
         $obj->entschieden_am  = $row['entschieden_am'] ?? null;
         $obj->bemerkung       = $row['bemerkung'] ?? null;
@@ -140,55 +141,60 @@ class CUrlaubsantrag
     {
         if ($this->antrag_id === null) {
             // INSERT
-            $sql = "
-                INSERT INTO urlaubsantraege
-                  (benutzer_id, start_datum, ende_datum, tage, status,
-                   eingereicht_am, entschieden_von, entschieden_am, bemerkung)
-                VALUES
-                  (:bid, :start, :ende, :tage, :status,
-                   :eingereicht, :entschieden_von, :entschieden_am, :bemerkung)
-            ";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':bid'             => $this->benutzer_id,
-                ':start'           => $this->start_datum,
-                ':ende'            => $this->ende_datum,
-                ':tage'            => $this->tage,
-                ':status'          => $this->status,
-                ':eingereicht'     => $this->eingereicht_am,
-                ':entschieden_von' => $this->entschieden_von,
-                ':entschieden_am'  => $this->entschieden_am,
-                ':bemerkung'       => $this->bemerkung,
-            ]);
+        $sql = "
+            INSERT INTO urlaubsantraege
+            (benutzer_id, start_datum, ende_datum, tage, status,
+            eingereicht_am, eingereicht_von,  -- NEU
+            entschieden_von, entschieden_am, bemerkung)
+            VALUES
+            (:bid, :start, :ende, :tage, :status,
+            :eingereicht, :eingereicht_von,     -- NEU
+            :entschieden_von, :entschieden_am, :bemerkung)
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid'             => $this->benutzer_id,
+            ':start'           => $this->start_datum,
+            ':ende'            => $this->ende_datum,
+            ':tage'            => $this->tage,
+            ':status'          => $this->status,
+            ':eingereicht'     => $this->eingereicht_am,
+            ':eingereicht_von' => $this->eingereicht_von,
+            ':entschieden_von' => $this->entschieden_von,
+            ':entschieden_am'  => $this->entschieden_am,
+            ':bemerkung'       => $this->bemerkung,
+        ]);
             $this->antrag_id = (int)$pdo->lastInsertId();
         } else {
             // UPDATE
             $sql = "
-                UPDATE urlaubsantraege
-                   SET benutzer_id    = :bid,
-                       start_datum    = :start,
-                       ende_datum     = :ende,
-                       tage           = :tage,
-                       status         = :status,
-                       eingereicht_am = :eingereicht,
-                       entschieden_von= :entschieden_von,
-                       entschieden_am = :entschieden_am,
-                       bemerkung      = :bemerkung
-                 WHERE antrag_id = :id
-            ";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':bid'             => $this->benutzer_id,
-                ':start'           => $this->start_datum,
-                ':ende'            => $this->ende_datum,
-                ':tage'            => $this->tage,
-                ':status'          => $this->status,
-                ':eingereicht'     => $this->eingereicht_am,
-                ':entschieden_von' => $this->entschieden_von,
-                ':entschieden_am'  => $this->entschieden_am,
-                ':bemerkung'       => $this->bemerkung,
-                ':id'              => $this->antrag_id,
-            ]);
+            UPDATE urlaubsantraege
+            SET benutzer_id     = :bid,
+                start_datum     = :start,
+                ende_datum      = :ende,
+                tage            = :tage,
+                status          = :status,
+                eingereicht_am  = :eingereicht,
+                eingereicht_von = :eingereicht_von,   -- NEU
+                entschieden_von = :entschieden_von,
+                entschieden_am  = :entschieden_am,
+                bemerkung       = :bemerkung
+            WHERE antrag_id = :id
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid'             => $this->benutzer_id,
+            ':start'           => $this->start_datum,
+            ':ende'            => $this->ende_datum,
+            ':tage'            => $this->tage,
+            ':status'          => $this->status,
+            ':eingereicht'     => $this->eingereicht_am,
+            ':eingereicht_von' => $this->eingereicht_von,
+            ':entschieden_von' => $this->entschieden_von,
+            ':entschieden_am'  => $this->entschieden_am,
+            ':bemerkung'       => $this->bemerkung,
+            ':id'              => $this->antrag_id,
+        ]);
         }
     }
 
@@ -205,6 +211,8 @@ class CUrlaubsantrag
     public function getEntschiedenAm(): ?string   { return $this->entschieden_am; }
     public function getErstelltAm(): ?string      { return $this->erstellt_am; }
     public function getAktualisiertAm(): ?string  { return $this->aktualisiert_am; }
+    public function setEingereichtVon(int $benutzerId): void { $this->eingereicht_von = $benutzerId; }
+    public function getEingereichtVon(): ?int     { return $this->eingereicht_von; }
 }
 
 /**
@@ -273,11 +281,50 @@ final class CUrlaubsantragRepository
         // Zeitpunkt des Einreichens
         $now = new \DateTimeImmutable();
         $antrag->setEingereichtZeitpunkt($now);
+        $antrag->setEingereichtVon($benutzerId);
 
         // In DB speichern
         $antrag->save($pdo);
 
         return $antrag;
+    }
+
+    private static function bucheUrlaubNachGenehmigung(PDO $pdo, CUrlaubsantrag $antrag): void
+    {
+        $benutzerId = $antrag->getBenutzerId();
+        $start      = new \DateTimeImmutable($antrag->getStartDatum());
+        $ende       = new \DateTimeImmutable($antrag->getEndeDatum());
+
+        // Urlaubskonto buchen
+        $jahrStart = (int)$start->format('Y');
+        $konto     = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahrStart);
+        $konto->bucheUrlaub($pdo, $antrag->getTage());
+
+        // Urlaub auf Monate verteilen
+        $tageProMonat = [];
+        for ($d = $start; $d <= $ende; $d = $d->add(new \DateInterval('P1D'))) {
+            $jahr  = (int)$d->format('Y');
+            $monat = (int)$d->format('n');
+            $key   = sprintf('%04d-%02d', $jahr, $monat);
+
+            if (!isset($tageProMonat[$key])) {
+                $tageProMonat[$key] = 0.0;
+            }
+            $tageProMonat[$key] += 1.0;
+        }
+
+        foreach ($tageProMonat as $ym => $tageInMonat) {
+            [$jahr, $monat] = array_map('intval', explode('-', $ym));
+
+            $szId = CStundenzettelRepository::findeOderErstelle(
+                $pdo,
+                $benutzerId,
+                $monat,
+                $jahr
+            );
+
+            CStundenzettelRepository::bucheUrlaub($pdo, $szId, (float)$tageInMonat);
+        }
     }
 
     /**
@@ -297,15 +344,26 @@ final class CUrlaubsantragRepository
 
         $now = new \DateTimeImmutable();
 
-        $antrag->entscheiden(
-            'genehmigt',
-            $aktuellerBenutzerId,
-            $now,
-            $bemerkung,
-            $istGegenpart
-        );
+        $pdo->beginTransaction();
+        try {
+            $antrag->entscheiden(
+                'genehmigt',
+                $aktuellerBenutzerId,
+                $now,
+                $bemerkung,
+                $istGegenpart
+            );
 
-        $antrag->save($pdo);
+            $antrag->save($pdo);
+
+            // JETZT erst Urlaub buchen (Konto + Stundenzettel)
+            self::bucheUrlaubNachGenehmigung($pdo, $antrag);
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
 
         return $antrag;
     }
@@ -354,10 +412,10 @@ final class CUrlaubsantragRepository
         $sql = "
             SELECT COUNT(*) AS cnt
             FROM urlaubsantraege
-            WHERE status = 'genehmigt'
+            WHERE status     = 'genehmigt'
               AND benutzer_id = :bid
               AND start_datum <= :tag
-              AND ende_datum >= :tag
+              AND ende_datum  >= :tag
         ";
 
         $stmt = $pdo->prepare($sql);
@@ -365,8 +423,126 @@ final class CUrlaubsantragRepository
             ':bid' => $benutzerId,
             ':tag' => $datumSql,
         ]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row && $row['cnt'] !== null ? (int)$row['cnt'] : 0;
+    }
+
+    public static function UrlaubfuerMonatsuebersicht(
+    \PDO $pdo,
+    int $benutzerId,
+    \DateTimeInterface $von,
+    \DateTimeInterface $bis
+): array {
+    if ($bis < $von) {
+        throw new \InvalidArgumentException('Ende darf nicht vor Beginn liegen.');
+    }
+
+    $vonDatum = new \DateTimeImmutable($von->format('Y-m-d'));
+    $bisDatum = new \DateTimeImmutable($bis->format('Y-m-d'));
+
+    $sql = "
+        SELECT start_datum, ende_datum
+        FROM urlaubsantraege
+        WHERE status      = 'genehmigt'
+          AND benutzer_id = :bid
+          -- nur Anträge, die den Zeitraum schneiden
+          AND NOT (ende_datum < :von OR start_datum > :bis)
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':bid' => $benutzerId,
+        ':von' => $vonDatum->format('Y-m-d'),
+        ':bis' => $bisDatum->format('Y-m-d'),
+    ]);
+
+    $urlaubProTag = []; // 'Y-m-d' => int
+
+    while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        $start = new \DateTimeImmutable($row['start_datum']);
+        $ende  = new \DateTimeImmutable($row['ende_datum']);
+
+        if ($start < $vonDatum) {
+            $start = $vonDatum;
+        }
+        if ($ende > $bisDatum) {
+            $ende = $bisDatum;
+        }
+
+        for ($d = $start; $d <= $ende; $d = $d->add(new \DateInterval('P1D'))) {
+            $key = $d->format('Y-m-d');
+            if (!isset($urlaubProTag[$key])) {
+                $urlaubProTag[$key] = 0;
+            }
+            $urlaubProTag[$key] += 1;
+        }
+    }
+
+    return $urlaubProTag;
+    }   
+
+        public static function freigabeDurchMitarbeiter(
+        \PDO $pdo,
+        int $antragId,
+        int $mitarbeiterId,
+        string $entscheidung,
+        ?string $bemerkung = null
+    ): CUrlaubsantrag {
+        $entscheidung = strtolower($entscheidung);
+        if (!in_array($entscheidung, ['genehmigt', 'abgelehnt'], true)) {
+            throw new \InvalidArgumentException('Ungültige Entscheidung.');
+        }
+
+        // Prüfen, ob dieser Benutzer diesen Antrag freigeben darf
+        $checkSql = "
+            SELECT a.antrag_id
+            FROM urlaubsantraege a
+            JOIN benutzer b_mitarbeiter
+              ON b_mitarbeiter.benutzer_id = a.benutzer_id
+            JOIN benutzer b_einreicher
+              ON b_einreicher.benutzer_id = a.eingereicht_von
+            JOIN rollen r_m
+              ON r_m.rollen_id = b_mitarbeiter.rollen_id
+            JOIN rollen r_e
+              ON r_e.rollen_id = b_einreicher.rollen_id
+            WHERE a.antrag_id   = :id
+              AND a.benutzer_id = :uid
+              AND a.status      = 'entwurf'
+              AND a.eingereicht_am IS NOT NULL
+              AND r_m.rollen_schluessel = 'mitarbeiter'
+              AND r_e.rollen_schluessel IN ('teamleitung','projektleitung')
+        ";
+
+        $stmt = $pdo->prepare($checkSql);
+        $stmt->execute([
+            ':id'  => $antragId,
+            ':uid' => $mitarbeiterId,
+        ]);
+
+        if (!$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            throw new \RuntimeException('Du darfst diesen Urlaubsantrag nicht freigeben.');
+        }
+
+        $istGegenpart = true;
+
+        if ($entscheidung === 'genehmigt') {
+            return self::genehmigeAntrag(
+                $pdo,
+                $antragId,
+                $mitarbeiterId,
+                $istGegenpart,
+                $bemerkung
+            ); 
+        }
+
+        return self::lehneAntragAb(
+            $pdo,
+            $antragId,
+            $mitarbeiterId,
+            $istGegenpart,
+            $bemerkung
+        );
+
     }
 }

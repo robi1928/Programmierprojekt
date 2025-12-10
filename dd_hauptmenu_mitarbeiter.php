@@ -45,8 +45,8 @@ $iststunden = CStundenzettelRepository::holeIststundenAktuellerMonat(
 
   <main>
   <div class="menu-links">
-      <a class="btn primary" href="dd_erfassung_mitarbeiter.php">Arbeitszeit erfassen</a>
-      <a class="btn primary" href="dd_freigaben_mitarbeiter.php">Arbeitszeit freigeben</a>
+      <a class="btn primary" href="dd_erfassung_mitarbeiter.php">Arbeitszeit & Urlaub erfassen</a>
+      <a class="btn primary" href="dd_freigaben_mitarbeiter.php">Arbeitszeit & Urlaub freigeben</a>
       <a class="btn primary" href="dd_monatsuebersicht_mitarbeiter.php">Eigene Monatsübersicht</a>
   </div>
 
@@ -74,12 +74,10 @@ $iststunden = CStundenzettelRepository::holeIststundenAktuellerMonat(
           </p>
           <ul>
             <li>dem <strong>Jahresurlaubsanspruch</strong>,</li>
-            <li>einem möglichen <strong>Übertrag aus dem Vorjahr</strong>,</li>
             <li>abzüglich aller bereits <strong>genehmigten oder genommenen Urlaubstage</strong>.</li>
           </ul>
           <p>
-            Urlaubsanträge stellst du im Bereich „Arbeitszeit erfassen“. Nicht genommener Urlaub
-            wird, soweit zulässig, automatisch in das nächste Jahr übertragen.
+            Urlaubsanträge stellst du im Bereich „Arbeitszeit & Urlaub erfassen“.
           </p>
         </details>
     </article>

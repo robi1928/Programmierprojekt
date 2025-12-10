@@ -64,24 +64,71 @@ final class CZeiteintragRepository {
      */
     public static function summeStundenProTag(PDO $pdo, int $benutzerId, DateTimeInterface $tag): float
     {
-        $datumSql = $tag->format('Y-m-d');
+        $jahr   = (int)$tag->format('Y');
+        $monat  = (int)$tag->format('n'); // 1–12
+        $tagNum = (int)$tag->format('j'); // 1–31
 
         $sql = "
             SELECT SUM(z.stunden) AS summe
             FROM zeiteintraege z
             JOIN stundenzettel s ON z.stundenzettel_id = s.stundenzettel_id
             WHERE s.benutzer_id = :bid
-              AND z.tag = :tag
+              AND s.jahr        = :jahr
+              AND s.monat       = :monat
+              AND z.tag         = :tag
         ";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':bid' => $benutzerId,
-            ':tag' => $datumSql,
+            ':bid'   => $benutzerId,
+            ':jahr'  => $jahr,
+            ':monat' => $monat,
+            ':tag'   => $tagNum,
         ]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row && $row['summe'] !== null ? (float)$row['summe'] : 0.0;
+    }
+
+    public static function ermittleKrankheitstagefuerMonatsuebersicht(
+        PDO $pdo,
+        int $benutzerId,
+        int $monat,
+        int $jahr
+    ): array {
+        $sql = "
+            SELECT
+                z.tag AS tag,
+                CASE
+                    WHEN SUM(CASE WHEN z.stunden = 0 THEN 1 ELSE 0 END) > 0
+                    THEN 1
+                    ELSE 0
+                END AS krank
+            FROM zeiteintraege z
+            JOIN stundenzettel s ON z.stundenzettel_id = s.stundenzettel_id
+            WHERE s.benutzer_id = :bid
+              AND s.jahr        = :jahr
+              AND s.monat       = :monat
+            GROUP BY z.tag
+            ORDER BY z.tag
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid'   => $benutzerId,
+            ':jahr'  => $jahr,
+            ':monat' => $monat,
+        ]);
+
+        $result = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $tagNum = (int)$row['tag'];
+            // Datum im Format Y-m-d bauen, passend zu $t['datum_sql']
+            $datum = sprintf('%04d-%02d-%02d', $jahr, $monat, $tagNum);
+            $result[$datum] = (int)$row['krank']; // 0 oder 1
+        }
+
+        return $result;
     }
 
 }
@@ -89,7 +136,7 @@ final class CZeiteintragRepository {
 class CErfassungVerarbeitung
 {
     // Validiert POST, berechnet Stunden, liefert [Date, ort_id, stunden, bemerkung]
-public static function validateInput(array $post, array $orte, string $maxDate): array
+    public static function validateInput(array $post, array $orte, string $maxDate): array
     {
         $datum = $post['datum'] ?? '';
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
@@ -142,7 +189,7 @@ public static function validateInput(array $post, array $orte, string $maxDate):
     }
 
     // Komplettablauf: validieren, Stundenzettel sicherstellen, upsert, recalc. Rückgabe: stundenzettel_id
-public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzerId, string $maxDate): int
+    public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzerId, string $maxDate): int
     {
         [$datum, $status, $ortId, $stunden, $bemerkung] = self::validateInput($post, $orte, $maxDate);
 
@@ -183,6 +230,7 @@ public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzer
             // Stundenzettel finden/erstellen
             $szId = CStundenzettelRepository::findeOderErstelle($pdo, $benutzerId, $monat, $jahr);
 
+
             // Zeiteintrag speichern (auch bei Urlaub/Krank → 0 Stunden & Ort 0)
             CZeiteintragRepository::upsert($pdo, $szId, $tag, $ortId, $stunden, $bemerkung);
 
@@ -190,14 +238,7 @@ public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzer
             CStundenzettelRepository::recalcIst($pdo, $szId);
 
             if ($status === 'urlaub') {
-                // Urlaubstage aufs Konto buchen
-                $konto = CUrlaubskonto::ladeFür($pdo, $benutzerId, $jahr);
-                $konto->bucheUrlaub($pdo, $urlaubTage);
-
-                // Urlaub im Stundenzettel summieren
-                CStundenzettelRepository::bucheUrlaub($pdo, $szId, $urlaubTage);
-
-                // Urlaubsantrag anlegen (Start–Ende)
+                // Nur Urlaubsantrag anlegen – KEIN direktes Buchen mehr
                 CUrlaubsantragRepository::erzeugeGenehmigtenTag(
                     $pdo,
                     $benutzerId,
@@ -206,6 +247,8 @@ public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzer
                     $bemerkung
                 );
             }
+
+            CStundenzettelRepository::reicheEin($pdo, $szId, $benutzerId);
 
             $pdo->commit();
             return $szId;

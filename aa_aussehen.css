@@ -303,3 +303,283 @@ details summary {
   max-height: 140px;
   transform: translateY(0);
 }
+
+.page-header {
+  margin: 1.5rem auto 1rem;
+  padding: 0 1rem;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.page-header h1 {
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.page-header .menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto 2rem;
+  padding: 0 1rem;
+}
+
+
+.quartal-block {
+  margin: 1rem 0 2rem;
+}
+
+.quartal-block h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.monatsuebersicht {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.monatsuebersicht caption {
+  text-align: left;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.monatsuebersicht th,
+.monatsuebersicht td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.monatsuebersicht thead th {
+  border-bottom: 2px solid #ccc;
+  font-weight: 600;
+}
+
+.monatsuebersicht--compact th,
+.monatsuebersicht--compact td {
+  padding: 0.35rem 0.5rem;
+}
+
+.row-summe-monat {
+  font-weight: 600;
+  background: #f5f5f5;
+}
+
+.row-summe-quartal {
+  font-weight: 700;
+  background: #e3f3ff;
+}
+
+.months {
+  margin-bottom: 2rem;
+}
+
+.months > h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.month {
+  border-radius: 0.5rem;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.month__header {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.month__header::-webkit-details-marker {
+  display: none;
+}
+
+.month__header::before {
+  content: "▸";
+  margin-right: 0.35rem;
+  transition: transform 0.15s ease-out;
+}
+
+.month[open] .month__header::before {
+  transform: rotate(90deg);
+}
+
+.month__title {
+  font-weight: 600;
+}
+
+.month__summary-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.month__summary-values span {
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.month__body {
+  padding: 0.4rem 0.9rem 0.8rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.note {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0.5rem 0;
+}
+
+.tag-werktag {
+  background: #fff;
+}
+
+.tag-feiertag {
+  background: #f3f3f3;
+}
+
+.tag-heute {
+  background: #fff9e6;
+}
+
+.tag-heute-label {
+  font-size: 0.8rem;
+  color: #b36b00;
+  margin-left: 0.3rem;
+}
+
+
+/* Mobile: Tabellen horizontal scrollbar machen */
+@media (max-width: 640px) {
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .month__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .month__summary-values {
+    width: 100%;
+  }
+
+  .month__body {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .monatsuebersicht {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .monatsuebersicht table {
+    min-width: 100%;
+  }
+}
+
+html[data-theme="dark"] .page-header {
+  color: #e5e9f0;
+}
+
+html[data-theme="dark"] main {
+  color: #e5e9f0;
+}
+
+html[data-theme="dark"] .monatsuebersicht {
+  border-collapse: collapse;
+}
+
+html[data-theme="dark"] .monatsuebersicht th,
+html[data-theme="dark"] .monatsuebersicht td {
+  border-bottom: 1px solid #3a4558;
+  color: #e5e9f0;
+}
+
+html[data-theme="dark"] .monatsuebersicht thead th {
+  border-bottom-color: #4c5670;
+}
+
+html[data-theme="dark"] .row-summe-monat {
+  background: #1f2835;
+}
+
+html[data-theme="dark"] .row-summe-quartal {
+  background: #1c3444;
+}
+
+html[data-theme="dark"] .quartal-block h2 {
+  color: #e5e9f0;
+}
+
+html[data-theme="dark"] .month {
+  border-color: #3a4558;
+  background: #171c24;
+}
+
+html[data-theme="dark"] .month__header {
+  background: #171c24;
+  color: #e5e9f0;
+}
+
+html[data-theme="dark"] .month__header:hover {
+  background: #1d2330;
+}
+
+html[data-theme="dark"] .month__summary-values span {
+  border-color: #3a4558;
+  background: #222938;
+  color: #e5e9f0;
+}
+
+html[data-theme="dark"] .month__body {
+  border-top-color: #3a4558;
+}
+
+html[data-theme="dark"] .note {
+  color: #a0aec0;
+}
+
+html[data-theme="dark"] .tag-werktag {
+  background: #181f2b;
+}
+
+html[data-theme="dark"] .tag-feiertag {
+  background: #202737;
+}
+
+html[data-theme="dark"] .tag-heute {
+  background: #2b2a1a;
+}
+
+html[data-theme="dark"] .tag-heute-label {
+  color: #f6d087;
+}
+
+@media (max-width: 640px) {
+  html[data-theme="dark"] .monatsuebersicht {
+    background: #141821;
+  }
+}
