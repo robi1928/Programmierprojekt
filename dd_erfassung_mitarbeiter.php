@@ -56,11 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
   <meta charset="utf-8">
-  <title>Erfassung</title>
+  <title>Arbeitszeit & Urlaub erfassen</title>
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-  <h1>Erfassung</h1>
+  <h1>Arbeitszeit & Urlaub erfassen</h1>
   <nav class="menu">
     <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>

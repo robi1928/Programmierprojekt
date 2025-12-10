@@ -350,8 +350,8 @@ final class CStundenzettelRepository {
               AND sz.benutzer_id      = :uid
               AND sz.status           = 'entwurf'
               AND sz.eingereicht_am IS NOT NULL
-              AND r_m.rollen_schluessel = 'mitarbeiter'
-              AND r_e.rollen_schluessel IN ('teamleitung','projektleitung')
+              AND r_m.rollen_schluessel = 'Mitarbeiter'
+              AND r_e.rollen_schluessel IN ('Teamleitung','Projektleitung')
         ";
 
         $stmt = $pdo->prepare($checkSql);

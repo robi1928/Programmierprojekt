@@ -20,7 +20,7 @@ modus_aus_url_setzen();
 
 <?php
 
-include_once 'cc_VorgabenAuftraggeber.php';
+include_once 'cc_vorgabenAuftraggeber.php';
 $Vorgaben = new CVorgabenAuftraggeber( 
     //-1, 
     $_GET['jahr'], 

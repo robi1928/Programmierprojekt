@@ -2,7 +2,7 @@
 <?php
 require_once 'bb_auth.php';
 include_once 'bb_db.php';
-include_once 'cc_VorgabenAuftraggeber.php';
+include_once 'cc_vorgabenAuftraggeber.php';
 
 rolle_erforderlich(ROLLE_PROJEKTLEITUNG);
 modus_aus_url_setzen();

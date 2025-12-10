@@ -510,8 +510,8 @@ final class CUrlaubsantragRepository
               AND a.benutzer_id = :uid
               AND a.status      = 'entwurf'
               AND a.eingereicht_am IS NOT NULL
-              AND r_m.rollen_schluessel = 'mitarbeiter'
-              AND r_e.rollen_schluessel IN ('teamleitung','projektleitung')
+              AND r_m.rollen_schluessel = 'Mitarbeiter'
+              AND r_e.rollen_schluessel IN ('Teamleitung','Projektleitung')
         ";
 
         $stmt = $pdo->prepare($checkSql);

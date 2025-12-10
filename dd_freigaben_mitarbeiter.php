@@ -6,7 +6,8 @@ require_once 'cc_urlaubsantraege.php';
 rolle_erforderlich(ROLLE_MITARBEITER);
 modus_aus_url_setzen();
 
-$aktuellerBenutzerId = (int)$_SESSION['benutzer_id'];
+$aktuellerBenutzerId = (int)$_SESSION['benutzer'];
+$benutzer   = aktueller_benutzer();
 
 $meldungOk    = null;
 $meldungFehler = null;
@@ -72,8 +73,8 @@ $sqlStz = "
     WHERE sz.benutzer_id = :uid
       AND sz.status      = 'entwurf'
       AND sz.eingereicht_am IS NOT NULL
-      AND r_m.rollen_schluessel = 'mitarbeiter'
-      AND r_e.rollen_schluessel IN ('teamleitung','projektleitung')
+      AND r_m.rollen_schluessel = 'Mitarbeiter'
+      AND r_e.rollen_schluessel IN ('Teamleitung','Projektleitung')
     ORDER BY sz.jahr DESC, sz.monat DESC
 ";
 
@@ -103,8 +104,8 @@ $sqlUrlaub = "
     WHERE a.benutzer_id = :uid
       AND a.status      = 'entwurf'
       AND a.eingereicht_am IS NOT NULL
-      AND r_m.rollen_schluessel = 'mitarbeiter'
-      AND r_e.rollen_schluessel IN ('teamleitung','projektleitung')
+      AND r_m.rollen_schluessel = 'Mitarbeiter'
+      AND r_e.rollen_schluessel IN ('Teamleitung','Projektleitung')
     ORDER BY a.start_datum
 ";
 
@@ -113,14 +114,21 @@ $stmtUrlaub->execute([':uid' => $aktuellerBenutzerId]);
 $offeneUrlaube = $stmtUrlaub->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
-<!DOCTYPE html>
-<html lang="de">
+<!doctype html>
+<html lang="de"<?= html_modus_attribut() ?>>
 <head>
-    <meta charset="UTF-8">
-    <title>Freigaben – Mitarbeiter</title>
-    <link rel="stylesheet" href="aa_aussehen.css">
+  <meta charset="utf-8">
+  <title>Arbeitszeit & Urlaub freigeben</title>
+  <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
+  <h1>Arbeitszeit & Urlaub freigeben</h1>
+  <p>Angemeldet: <?= htmlspecialchars($benutzer['name']) ?> (<?= htmlspecialchars($benutzer['rolle']) ?>)</p>
+  <nav>
+    <a href="bb_ausloggen.php">Abmelden</a>
+    <?= modus_navigation() ?>
+  </nav>
+ </header>
 
 <div class="container">
     <header class="header">
