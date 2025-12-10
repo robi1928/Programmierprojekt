@@ -325,11 +325,10 @@ details summary {
 }
 
 main {
-  max-width: 960px;
+  max-width: none;
   margin: 0 auto 2rem;
   padding: 0 1rem;
 }
-
 
 .quartal-block {
   margin: 1rem 0 2rem;

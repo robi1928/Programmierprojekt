@@ -1,6 +1,5 @@
 <!-- Selber geschrieben, bzw kopiert aus anderem Projekt. Aria label erstmal übernommen. Am Ende schauen, ob Barrierefreiheit übernommen wird -->
 <?php
-// Nach session_start() einbinden
 
 /** Prüft, ob in der URL (?modus=…) ein Modus-Parameter übergeben wurde.
  * Zulässige Werte: hell, dunkel, auto. Bei Gültigkeit wird in die Session geschrieben. */
