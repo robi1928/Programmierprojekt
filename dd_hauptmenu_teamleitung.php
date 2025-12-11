@@ -23,8 +23,8 @@ $benutzer = aktueller_benutzer();
 
     <a class="btn primary" href="dd_nutzer_anlegen_teamleitung.php">Nutzer anlegen</a>
     <a class="btn primary" href="dd_nutzer_aktualisieren_teamleitung.php">Nutzer aktualisieren</a>
-    <a class="btn primary" href="dd_erfassung_teamleitung.php">Arbeitszeit erfassen</a>
-    <a class="btn primary" href="dd_freigaben_teamleitung.php">Arbeitszeiten freigeben</a>    
+    <a class="btn primary" href="dd_erfassung_teamleitung.php">Arbeitszeit & Urlaub erfassen</a>
+    <a class="btn primary" href="dd_freigaben_teamleitung.php">Arbeitszeit & Urlaub freigeben</a>    
     <a class="btn primary" href="dd_monatsuebersicht_teamleitung.php">Monatsübersicht</a>
   </div>
 </body>

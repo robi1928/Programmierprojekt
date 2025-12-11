@@ -25,72 +25,14 @@ if ($benutzer instanceof CBenutzer) {
                : (isset($benutzer->id) ? (int)$benutzer->id : null);
 }
 
-// nur Einträge für vergangene Tage möglich (außer Urlaub)
+// selber geschrieben mit stackoverflowvorlage
+// nur Einträge für vergangene Tage möglich.
 $heute = new DateTimeImmutable('today');
 $maxDate = $heute->format('Y-m-d');
 $msg = null; $err = null;
 
 // Arbeitsorte laden
 $orte = CArbeitsortRepository::alle($pdo);
-
-// prüft, ob das http request verfahren durch ist, also Formular versendet wurde
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        // setze PDO auf Exception-Modus, falls noch nicht gesetzt (hilft bei Debug)
-        if ($pdo instanceof PDO) {
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        }
-
-        // Ziel-Benutzer: aus POST (wird durch Hidden-Input übergeben). Fallback auf GET.
-        $zielBenutzerId = isset($_POST['id']) ? (int)$_POST['id'] : (isset($_GET['id']) ? (int)$_GET['id'] : null);
-        if ($zielBenutzerId === null) {
-            throw new RuntimeException('Bitte wählen Sie zuerst einen Benutzer aus.');
-        }
-
-        // Datum aus Formular (Pflichtfeld)
-        if (empty($_POST['datum'])) {
-            throw new RuntimeException('Bitte geben Sie ein Datum an.');
-        }
-        $datum = new DateTimeImmutable($_POST['datum']);
-
-        // Monat/Jahr für Stundenzettel bestimmen
-        $monat = (int)$datum->format('n');
-        $jahr  = (int)$datum->format('Y');
-
-        // Prüfen, ob für diesen Benutzer und Monat/Jahr bereits ein Stundenzettel existiert
-        $stmt = $pdo->prepare('SELECT stundenzettel_id FROM stundenzettel WHERE benutzer_id = :bid AND monat = :monat AND jahr = :jahr LIMIT 1');
-        $stmt->execute([':bid' => $zielBenutzerId, ':monat' => $monat, ':jahr' => $jahr]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$row) {
-            // Stundenzettel anlegen
-            $stz = new CStundenzettel($zielBenutzerId, $monat, $jahr);
-
-            // Wenn create false/Exception => catch weiter unten
-            $erfolg = $stz->create($pdo);
-            if (!$erfolg) {
-                throw new RuntimeException('CErstellung des Stundenzettels gab false zurück.');
-            }
-
-            // Zusätzlicher DB-Check: sicherstellen, dass jetzt ein Datensatz existiert
-            $stmt2 = $pdo->prepare('SELECT stundenzettel_id FROM stundenzettel WHERE benutzer_id = :bid AND monat = :monat AND jahr = :jahr LIMIT 1');
-            $stmt2->execute([':bid' => $zielBenutzerId, ':monat' => $monat, ':jahr' => $jahr]);
-            $row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
-            if (!$row2) {
-                throw new RuntimeException('Stundenzettel wurde nicht in der Datenbank gefunden nach create().');
-            }
-            // Optional: $stundenzettelId zur weiteren Verwendung
-            $stundenzettelId = (int)$row2['stundenzettel_id'];
-        }
-
-        // Jetzt die eigentliche Erfassung durchführen. CErfassungVerarbeitung::erfasse erwartet die Ziel-Benutzer-ID.
-        CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $zielBenutzerId, $maxDate);
-        $msg = 'Eintrag gespeichert.';
-    } catch (Throwable $e) {
-        // Für Debug kurz die konkrete Meldung anzeigen (kann in Produktion abgeschwächt werden)
-        $err = 'Fehler: ' . $e->getMessage();
-    }
-}
 
 // Alle Benutzer für das Auswahlfeld laden
 $benutzer_liste = [];
@@ -99,56 +41,73 @@ try {
     $statement->execute();
     $benutzer_liste = $statement->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-    // Falls Laden fehlschlägt, Nutzerliste leer lassen und Fehler melden (nicht fatal)
-    $benutzer_liste = [];
-    $err = $err ?? 'Fehler beim Laden der Benutzerdaten.';
+    echo "Fehler beim Laden der Benutzerdaten.";
+    exit;
 }
-
-// Welche ID ist selektiert? (kommt per GET vom Auswahlformular)
+// Welche ID ist selektiert?
 $ausgewaehlte_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $Benutzer = null;
 if ($ausgewaehlte_id) {
-    // Nur zur Anzeige/Aufbau, nicht zwingend notwendig hier
     $Benutzer = new CBenutzer($ausgewaehlte_id);
-    if (method_exists($Benutzer, 'Load')) {
-        $Benutzer->Load();
+    if (!$Benutzer->Load()) {
+        echo "Benutzer nicht gefunden.";
+        exit;
     }
 }
+
+  // prüft, ob das http request verfahren durch ist, also Formular versendet wurde
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        if (isset($_POST['benutzer_id']) && ctype_digit((string)$_POST['benutzer_id'])) {
+            $zielBenutzerId = (int)$_POST['benutzer_id'];
+        } else {
+            throw new RuntimeException('Bitte zuerst einen Benutzer auswählen.');
+        }
+
+        CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $zielBenutzerId, $benutzerId, $maxDate);
+        $msg = 'Eintrag gespeichert.';
+    } catch (Throwable $e) {
+        $err = $e->getMessage();
+    }
+}
+
+// selber geschrieben, mit GTP verbessert
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
   <meta charset="utf-8">
-  <title>Arbeitszeit erfassen (Projektleitung)</title>
+  <title>Arbeitszeit & Urlaub erfassen</title>
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-  <h1>Arbeitszeit erfassen</h1>
+  <h1>Arbeitszeit & Urlaub erfassen</h1>
   <nav class="menu">
     <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
-
+<!-- darstellung von Fehler& Erfolgsmeldungen.-->
   <?php if ($msg): ?><p class="alert-ok"><?= h($msg) ?></p><?php endif; ?>
   <?php if ($err): ?><p class="alert-err"><?= h($err) ?></p><?php endif; ?>
 
-  <!-- Auswahlformular für Benutzer (GET) -->
-  <form id="userSelectForm" method="get" class="form-inline" style="margin-bottom:1rem;">
-    <label for="benutzer_select">Wähle einen Benutzer:</label>
-    <select id="benutzer_select" name="id" onchange="document.getElementById('userSelectForm').submit()">
-      <option value="">-- Bitte auswählen --</option>
-      <?php foreach ($benutzer_liste as $row): ?>
-        <option value="<?= htmlspecialchars($row['benutzer_id']) ?>" <?= ($ausgewaehlte_id == $row['benutzer_id']) ? 'selected' : '' ?>>
-          <?= htmlspecialchars($row['nachname'] . ", " . $row['vorname'] . " (" . $row['email'] . ")") ?>
-        </option>
-      <?php endforeach; ?>
-    </select>
+  <form class="form" method="get">
+    <div class="field">
+      <label for="benutzer_select">Wähle einen Benutzer:</label>
+      <select id="benutzer_select" name="id" onchange="this.form.submit()">
+        <option value="">-- Bitte auswählen --</option>
+        <?php foreach ($benutzer_liste as $row): ?>
+          <option value="<?= (int)$row['benutzer_id'] ?>" <?= ($ausgewaehlte_id == $row['benutzer_id']) ? 'selected' : '' ?>>
+            <?= h($row['nachname'] . ", " . $row['vorname'] . " (" . $row['email'] . ")") ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </div>
   </form>
 
   <form class="form" method="post" autocomplete="off">
-    <!-- Hidden: ausgewählte Benutzer-ID wird beim Absenden des Erfassungsformulars mitgeschickt -->
-    <input type="hidden" name="id" value="<?= h($ausgewaehlte_id) ?>">
-
+    <?php if ($ausgewaehlte_id): ?>
+      <input type="hidden" name="benutzer_id" value="<?= (int)$ausgewaehlte_id ?>">
+    <?php endif; ?>
     <div class="field">
       <label for="datum">Tag</label>
       <input id="datum" name="datum" type="date"
@@ -200,12 +159,11 @@ if ($ausgewaehlte_id) {
       <div class="field">
         <label for="ort_id">Arbeitsort</label>
         <select id="ort_id" name="ort_id">
-          <option value="">-- bitte wählen --</option>
           <?php
           $selOrt = isset($_POST['ort_id']) ? (int)$_POST['ort_id'] : null;
           foreach ($orte as $o):
-              $id  = isset($o['ort_id']) ? (int)$o['ort_id'] : (isset($o['id']) ? (int)$o['id'] : 0);
-              $txt = $o['bezeichnung'] ?? ($o['name'] ?? '');
+              $id  = (int)$o['ort_id'];
+              $txt = $o['bezeichnung'] ?? '';
           ?>
             <option value="<?= $id ?>" <?= ($selOrt !== null && $selOrt === $id) ? 'selected' : '' ?>>
               <?= h($txt) ?>
@@ -229,6 +187,8 @@ if ($ausgewaehlte_id) {
     <small class="note">Bei „Krank“ oder „Urlaub“ werden Zeiten ignoriert und 0:00 h verbucht.</small>
   </form>
 
+  <!-- selber versucht, mit GTP verbessert. Hab hier ausnahmsweise JavaScript genutzt.-->
+  <!-- braucht es nicht zwingend, aber ist schöner. Deaktiviert einige Felder wenn sinnvoll. Für die Server Logik egal-->
 <script>
 (function(){
   const radios      = document.querySelectorAll('input[name="status"]');

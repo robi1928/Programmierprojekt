@@ -1,17 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Domänenmodell für einen Urlaubsantrag.
- *
- * Statusfluss (Soll):
- *   - neu:       'entwurf'  (mit eingereicht_am = Anlegezeitpunkt)
- *   - Entscheidung: 'genehmigt' oder 'abgelehnt' (immer durch den Gegenpart)
- *
- * Gegenpart-Logik (muss außerhalb dieser Klasse geprüft werden):
- *   - Antragsteller ist Mitarbeiter   → Gegenpart ist Teamleiter/Projektleiter
- *   - Antragsteller ist TL/PL        → Gegenpart ist Mitarbeiter
- */
 class CUrlaubsantrag
 {
     private ?int $antrag_id = null;
@@ -244,6 +233,7 @@ final class CUrlaubsantragRepository
     public static function erzeugeGenehmigtenTag(
         \PDO $pdo,
         int $benutzerId,
+        int $einreicherId,
         \DateTimeInterface $datum,
         ?\DateTimeInterface $datumEnde,
         ?string $bemerkung
@@ -281,7 +271,7 @@ final class CUrlaubsantragRepository
         // Zeitpunkt des Einreichens
         $now = new \DateTimeImmutable();
         $antrag->setEingereichtZeitpunkt($now);
-        $antrag->setEingereichtVon($benutzerId);
+        $antrag->setEingereichtVon($einreicherId);
 
         // In DB speichern
         $antrag->save($pdo);
@@ -580,4 +570,130 @@ final class CUrlaubsantragRepository
         );
 
     }
+
+    public static function freigabeDurchProjektleitung(
+        \PDO $pdo,
+        int $antragId,
+        int $projektleiterId,
+        string $entscheidung,
+        ?string $bemerkung = null
+    ): CUrlaubsantrag {
+        $entscheidung = strtolower($entscheidung);
+        if (!in_array($entscheidung, ['genehmigt', 'abgelehnt'], true)) {
+            throw new \InvalidArgumentException('Ungültige Entscheidung.');
+        }
+
+        $checkSql = "
+            SELECT a.antrag_id
+            FROM urlaubsantraege a
+            JOIN benutzer e
+            ON e.benutzer_id = a.eingereicht_von
+            JOIN rollen r_e
+            ON r_e.rollen_id = e.rollen_id
+            JOIN benutzer b_pl
+            ON b_pl.benutzer_id = :uid
+            JOIN rollen r_pl
+            ON r_pl.rollen_id = b_pl.rollen_id
+            WHERE a.antrag_id   = :id
+            AND a.status      = 'entwurf'
+            AND a.eingereicht_am IS NOT NULL
+            -- Einreicher ist TL oder Mitarbeiter
+            AND r_e.rollen_schluessel IN ('Teamleitung','Mitarbeiter')
+            -- Freigeber ist Projektleitung
+            AND r_pl.rollen_schluessel = 'Projektleitung'
+        ";
+
+        $stmt = $pdo->prepare($checkSql);
+        $stmt->execute([
+            ':id'  => $antragId,
+            ':uid' => $projektleiterId,
+        ]);
+
+        if (!$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            throw new \RuntimeException('Du darfst diesen Urlaubsantrag nicht freigeben.');
+        }
+
+        // jetzt regulären Workflow nutzen
+        if ($entscheidung === 'genehmigt') {
+            return self::genehmigeAntrag(
+                $pdo,
+                $antragId,
+                $projektleiterId,
+                true,
+                $bemerkung
+            );
+        }
+
+        return self::lehneAntragAb(
+            $pdo,
+            $antragId,
+            $projektleiterId,
+            true,
+            $bemerkung
+        );
+    }
+
+    public static function freigabeDurchTeamleitung(
+        \PDO $pdo,
+        int $antragId,
+        int $teamleiterId,
+        string $entscheidung,
+        ?string $bemerkung = null
+    ): CUrlaubsantrag {
+        $entscheidung = strtolower($entscheidung);
+        if (!in_array($entscheidung, ['genehmigt', 'abgelehnt'], true)) {
+            throw new \InvalidArgumentException('Ungültige Entscheidung.');
+        }
+
+        $checkSql = "
+            SELECT a.antrag_id
+            FROM urlaubsantraege a
+            JOIN benutzer e
+            ON e.benutzer_id = a.eingereicht_von
+            JOIN rollen r_e
+            ON r_e.rollen_id = e.rollen_id
+            JOIN benutzer b_tl
+            ON b_tl.benutzer_id = :uid
+            JOIN rollen r_tl
+            ON r_tl.rollen_id = b_tl.rollen_id
+            WHERE a.antrag_id   = :id
+            AND a.status      = 'entwurf'
+            AND a.eingereicht_am IS NOT NULL
+            -- Einreicher ist Projektleitung oder Mitarbeiter
+            AND r_e.rollen_schluessel IN ('Projektleitung','Mitarbeiter')
+            -- Freigeber ist Teamleitung
+            AND r_tl.rollen_schluessel = 'Teamleitung'
+        ";
+
+        $stmt = $pdo->prepare($checkSql);
+        $stmt->execute([
+            ':id'  => $antragId,
+            ':uid' => $teamleiterId,
+        ]);
+
+        if (!$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            throw new \RuntimeException('Du darfst diesen Urlaubsantrag nicht freigeben.');
+        }
+
+        // regulären Workflow nutzen
+        if ($entscheidung === 'genehmigt') {
+            return self::genehmigeAntrag(
+                $pdo,
+                $antragId,
+                $teamleiterId,
+                true,
+                $bemerkung
+            );
+        }
+
+        return self::lehneAntragAb(
+            $pdo,
+            $antragId,
+            $teamleiterId,
+            true,
+            $bemerkung
+        );
+    }
+
+
 }

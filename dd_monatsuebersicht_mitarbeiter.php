@@ -92,17 +92,15 @@ $heuteSql            = $heute->format('Y-m-d');
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
   <meta charset="utf-8">
-  <title>Monatsübersicht</title>
+  <title>Arbeitszeit & Urlaub erfassen</title>
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-<header class="page-header">
   <h1>Monatsübersicht – Quartal <?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></h1>
   <nav class="menu">
     <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
-</header>
 
 <main>
   <section class="quartal-block">
@@ -120,8 +118,8 @@ $heuteSql            = $heute->format('Y-m-d');
         <tr class="row-summe-quartal">
           <td>Q<?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></td>
           <td><?= h(number_format($quartalSummen['stunden'], 2, ',', '.')) ?></td>
-          <td><?= h((string)$quartalSummen['urlaub']) ?></td>
-          <td><?= h((string)$quartalSummen['krank']) ?></td>
+          <td><?= h(number_format($quartalSummen['urlaub'], 2, ',', '.')) ?></td>
+          <td><?= h(number_format($quartalSummen['krank'], 2, ',', '.')) ?></td>
         </tr>
       </tbody>
     </table>
@@ -154,9 +152,9 @@ $heuteSql            = $heute->format('Y-m-d');
             <?= h($monatName) ?> <?= h((string)$jahr) ?>
           </span>
           <span class="month__summary-values">
-            <span><?= h(number_format($summe['stunden'], 2, ',', '.')) ?> h</span>
-            <span><?= h((string)$summe['urlaub']) ?> Urlaub</span>
-            <span><?= h((string)$summe['krank']) ?> Krank</span>
+          <span><?= h(number_format($summe['stunden'], 2, ',', '.')) ?> h</span>
+          <span><?= h(number_format($summe['urlaub'], 2, ',', '.')) ?> Urlaub</span>
+          <span><?= h(number_format($summe['krank'], 2, ',', '.')) ?> Krank</span>
           </span>
         </summary>
 
@@ -200,8 +198,8 @@ $heuteSql            = $heute->format('Y-m-d');
                     <?php endif; ?>
                   </td>
                   <td><?= h(number_format($werte['stunden'], 2, ',', '.')) ?></td>
-                  <td><?= h((string)$werte['urlaub']) ?></td>
-                  <td><?= h((string)$werte['krank']) ?></td>
+                  <td><?= h(number_format((float)$werte['urlaub'], 2, ',', '.')) ?></td>
+                  <td><?= h(number_format((float)$werte['krank'], 2, ',', '.')) ?></td>
                 </tr>
               <?php endforeach; ?>
               </tbody>
@@ -209,8 +207,8 @@ $heuteSql            = $heute->format('Y-m-d');
                 <tr class="row-summe-monat">
                   <th>Summe Monat</th>
                   <td><?= h(number_format($summe['stunden'], 2, ',', '.')) ?></td>
-                  <td><?= h((string)$summe['urlaub']) ?></td>
-                  <td><?= h((string)$summe['krank']) ?></td>
+                  <td><?= h(number_format($summe['urlaub'], 2, ',', '.')) ?></td>
+                  <td><?= h(number_format($summe['krank'], 2, ',', '.')) ?></td>
                 </tr>
               </tfoot>
             </table>

@@ -382,4 +382,123 @@ final class CStundenzettelRepository {
             ':id'     => $stundenzettelId,
         ]);
     }
+
+    public static function freigabeDurchProjektleitung(
+        PDO $pdo,
+        int $stundenzettelId,
+        int $projektleiterId,
+        string $entscheidung
+    ): void {
+        $entscheidung = strtolower($entscheidung);
+        if (!in_array($entscheidung, ['genehmigt', 'abgelehnt'], true)) {
+            throw new InvalidArgumentException('Ungültige Entscheidung.');
+        }
+
+        $checkSql = "
+            SELECT sz.stundenzettel_id
+            FROM stundenzettel sz
+            JOIN benutzer e
+            ON e.benutzer_id = sz.eingereicht_von
+            JOIN rollen r_e
+            ON r_e.rollen_id = e.rollen_id
+            JOIN benutzer b_pl
+            ON b_pl.benutzer_id = :uid
+            JOIN rollen r_pl
+            ON r_pl.rollen_id = b_pl.rollen_id
+            WHERE sz.stundenzettel_id = :id
+            AND sz.status = 'entwurf'
+            AND sz.eingereicht_am IS NOT NULL
+            -- Einreicher ist TL oder Mitarbeiter
+            AND r_e.rollen_schluessel IN ('Teamleitung','Mitarbeiter')
+            -- Freigeber ist Projektleitung
+            AND r_pl.rollen_schluessel = 'Projektleitung'
+        ";
+
+        $stmt = $pdo->prepare($checkSql);
+        $stmt->execute([
+            ':id'  => $stundenzettelId,
+            ':uid' => $projektleiterId,
+        ]);
+
+        if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+            throw new RuntimeException('Du darfst diesen Stundenzettel nicht freigeben.');
+        }
+
+        $updateSql = "
+            UPDATE stundenzettel
+            SET status        = :status,
+                genehmigt_von = :uid,
+                genehmigt_am  = NOW(),
+                aktualisiert_am = NOW()
+            WHERE stundenzettel_id = :id
+            AND status = 'entwurf'
+        ";
+
+        $stUpdate = $pdo->prepare($updateSql);
+        $stUpdate->execute([
+            ':status' => $entscheidung,
+            ':uid'    => $projektleiterId,
+            ':id'     => $stundenzettelId,
+        ]);
+    }
+
+    public static function freigabeDurchTeamleitung(
+        PDO $pdo,
+        int $stundenzettelId,
+        int $teamleiterId,
+        string $entscheidung
+    ): void {
+        $entscheidung = strtolower($entscheidung);
+        if (!in_array($entscheidung, ['genehmigt', 'abgelehnt'], true)) {
+            throw new InvalidArgumentException('Ungültige Entscheidung.');
+        }
+
+        $checkSql = "
+            SELECT sz.stundenzettel_id
+            FROM stundenzettel sz
+            JOIN benutzer e
+            ON e.benutzer_id = sz.eingereicht_von
+            JOIN rollen r_e
+            ON r_e.rollen_id = e.rollen_id
+            JOIN benutzer b_tl
+            ON b_tl.benutzer_id = :uid
+            JOIN rollen r_tl
+            ON r_tl.rollen_id = b_tl.rollen_id
+            WHERE sz.stundenzettel_id = :id
+            AND sz.status = 'entwurf'
+            AND sz.eingereicht_am IS NOT NULL
+            -- Einreicher ist Projektleitung oder Mitarbeiter
+            AND r_e.rollen_schluessel IN ('Projektleitung','Mitarbeiter')
+            -- Freigeber ist Teamleitung
+            AND r_tl.rollen_schluessel = 'Teamleitung'
+        ";
+
+        $stmt = $pdo->prepare($checkSql);
+        $stmt->execute([
+            ':id'  => $stundenzettelId,
+            ':uid' => $teamleiterId,
+        ]);
+
+        if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+            throw new RuntimeException('Du darfst diesen Stundenzettel nicht freigeben.');
+        }
+
+        $updateSql = "
+            UPDATE stundenzettel
+            SET status        = :status,
+                genehmigt_von = :uid,
+                genehmigt_am  = NOW(),
+                aktualisiert_am = NOW()
+            WHERE stundenzettel_id = :id
+            AND status = 'entwurf'
+        ";
+
+        $stUpdate = $pdo->prepare($updateSql);
+        $stUpdate->execute([
+            ':status' => $entscheidung,
+            ':uid'    => $teamleiterId,
+            ':id'     => $stundenzettelId,
+        ]);
+    }
+
 }

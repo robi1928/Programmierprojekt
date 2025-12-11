@@ -34,19 +34,6 @@ $msg = null; $err = null;
 // Arbeitsorte laden
 $orte = CArbeitsortRepository::alle($pdo);
 
-  // prüft, ob das http request verfahren durch ist, also Formular versendet wurde
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        if ($benutzerId === null) {
-            throw new RuntimeException('Benutzerkontext fehlt. Bitte neu anmelden.');
-        }
-        CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $benutzerId, $maxDate);
-        $msg = 'Eintrag gespeichert.';
-    } catch (Throwable $e) {
-        $err = $e->getMessage();
-    }
-}
-
 // Alle Benutzer für das Auswahlfeld laden
 $benutzer_liste = [];
 try {
@@ -67,17 +54,34 @@ if ($ausgewaehlte_id) {
         exit;
     }
 }
+
+  // prüft, ob das http request verfahren durch ist, also Formular versendet wurde
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        if (isset($_POST['benutzer_id']) && ctype_digit((string)$_POST['benutzer_id'])) {
+            $zielBenutzerId = (int)$_POST['benutzer_id'];
+        } else {
+            throw new RuntimeException('Bitte zuerst einen Benutzer auswählen.');
+        }
+
+        CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $zielBenutzerId, $benutzerId, $maxDate);
+        $msg = 'Eintrag gespeichert.';
+    } catch (Throwable $e) {
+        $err = $e->getMessage();
+    }
+}
+
 // selber geschrieben, mit GTP verbessert
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
   <meta charset="utf-8">
-  <title>Erfassung</title>
+  <title>Arbeitszeit & Urlaub erfassen</title>
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-  <h1>Erfassung</h1>
+  <h1>Arbeitszeit & Urlaub erfassen</h1>
   <nav class="menu">
     <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
@@ -86,17 +90,24 @@ if ($ausgewaehlte_id) {
   <?php if ($msg): ?><p class="alert-ok"><?= h($msg) ?></p><?php endif; ?>
   <?php if ($err): ?><p class="alert-err"><?= h($err) ?></p><?php endif; ?>
 
-    <label for="benutzer_select">Wähle einen Benutzer:</label>
-    <select id="benutzer_select" name="id" onchange="this.form.submit()">
-      <option value="">-- Bitte auswählen --</option>
-      <?php foreach ($benutzer_liste as $row): ?>
-        <option value="<?= htmlspecialchars($row['benutzer_id']) ?>" <?= ($ausgewaehlte_id == $row['benutzer_id']) ? 'selected' : '' ?>>
-          <?= htmlspecialchars($row['nachname'] . ", " . $row['vorname'] . " (" . $row['email'] . ")") ?>
-        </option>
-      <?php endforeach; ?>
-    </select>
+  <form class="form" method="get">
+    <div class="field">
+      <label for="benutzer_select">Wähle einen Benutzer:</label>
+      <select id="benutzer_select" name="id" onchange="this.form.submit()">
+        <option value="">-- Bitte auswählen --</option>
+        <?php foreach ($benutzer_liste as $row): ?>
+          <option value="<?= (int)$row['benutzer_id'] ?>" <?= ($ausgewaehlte_id == $row['benutzer_id']) ? 'selected' : '' ?>>
+            <?= h($row['nachname'] . ", " . $row['vorname'] . " (" . $row['email'] . ")") ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+  </form>
 
   <form class="form" method="post" autocomplete="off">
+    <?php if ($ausgewaehlte_id): ?>
+      <input type="hidden" name="benutzer_id" value="<?= (int)$ausgewaehlte_id ?>">
+    <?php endif; ?>
     <div class="field">
       <label for="datum">Tag</label>
       <input id="datum" name="datum" type="date"

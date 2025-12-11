@@ -51,8 +51,8 @@ VALUES
     (3, 10, 2025, 'genehmigt', '2025-10-31 16:30:00', 3, 4, '2025-11-02 08:10:00', 160.00, 160.00, 0.00),
     (3, 12, 2025, 'entwurf', '2025-12-03 09:00:00', 4, NULL, NULL, 160.00, 0.00, 0.00),
     (4, 10, 2024, 'entwurf', '2024-10-15 14:20:00', 4, NULL, NULL, 169.00, 0.00, 0.00),
-    (4, 10, 2025, 'genehmigt', '2025-10-31 16:30:00', 4, 3, '2025-11-02 08:10:00', 169.00, 169.00, 1.00),
-    (4, 12, 2025, 'entwurf', '2025-12-04 09:00:00', 3, NULL, NULL, 150.00, 0.00, 1.00),
+    (4, 10, 2025, 'genehmigt', '2025-10-31 16:30:00', 4, 3, '2025-11-02 08:10:00', 169.00, 10.00, 1.00),
+    (4, 12, 2025, 'entwurf', '2025-12-04 09:00:00', 3, NULL, NULL, 150.00, 7.00, 1.00),
     (1, 1, 2025, 'genehmigt','2025-01-31 16:00:00', 1, 3, '2025-02-01 09:00:00', 86.00, 86.00, 2.00),
     (1, 6, 2025, 'genehmigt', '2025-06-30 16:00:00', 1, 3, '2025-07-01 09:00:00', 90.00, 90.00, 3.00);
 
@@ -451,6 +451,15 @@ SELECT s.stundenzettel_id, 20, 1, 7.00, 'Homeoffice Abschlussdokumentation 2025'
 FROM stundenzettel s JOIN benutzer b USING(benutzer_id)
 WHERE b.email='erika.beispiel@example.com' AND s.monat=12 AND s.jahr=2025;
 
+INSERT INTO zeiteintraege (stundenzettel_id, tag, ort_id, stunden, bemerkung)
+SELECT s.stundenzettel_id, 21, 1, 7.00, 'Homeoffice Abschlussdokumentation 2025'
+FROM stundenzettel s JOIN benutzer b USING(benutzer_id)
+WHERE b.email='projektleitung@example.com' AND s.monat=12 AND s.jahr=2025;
+
+INSERT INTO zeiteintraege (stundenzettel_id, tag, ort_id, stunden, bemerkung)
+SELECT s.stundenzettel_id, 21, 1, 10.00, 'Homeoffice Abschlussdokumentation 2025'
+FROM stundenzettel s JOIN benutzer b USING(benutzer_id)
+WHERE b.email='projektleitung@example.com' AND s.monat=10 AND s.jahr=2025;
 
 INSERT INTO urlaubskonten (benutzer_id, jahr, anspruch_tage, genutzt_tage) VALUES
   (1, 2025, 23.0, 12.0),   -- Max Meier

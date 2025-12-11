@@ -11,8 +11,14 @@ require_once __DIR__ . '/cc_urlaubskonten.php';
 require_once __DIR__ . '/cc_urlaubsantraege.php';
 
 // Aktueller Benutzer (für Fallback, falls keine Auswahl getroffen wurde)
-$aktuellerBenutzer = aktueller_benutzer();
-$aktuellerBenutzerId = CBenutzerHelper::ermittleIdAusKontext($aktuellerBenutzer);
+$benutzer   = aktueller_benutzer();
+$benutzerId = CBenutzerHelper::ermittleIdAusKontext($benutzer);
+if ($benutzerId === null) {
+    die('Fehler: Benutzer-ID nicht im Kontext gefunden. Bitte neu anmelden.');
+}
+
+// Datum für die Übersicht (heute)
+$heute = new DateTimeImmutable('today');
 
 // Alle Benutzer für das Auswahlfeld laden
 $benutzer_liste = [];
@@ -25,12 +31,42 @@ try {
     $benutzer_liste = [];
 }
 
+// Globales Quartalsaggregat (alle aktiven Benutzer)
+$globalQuartalSummen = [
+    'stunden' => 0.0,
+    'urlaub'  => 0.0,
+    'krank'   => 0.0,
+];
+
+// Wir nehmen das Quartal von "heute" als Bezug
+foreach ($benutzer_liste as $row) {
+    $id = (int)$row['benutzer_id'];
+
+    // Optional: nur aktive Benutzer berücksichtigen → dafür brauchst du "aktiv" im SELECT oben
+    // if (!(int)$row['aktiv']) { continue; }
+
+$m = CStundenzettelRepository::monatsuebersichtQuartal($pdo, $id, $heute);
+
+$quartalKrankMapUser = CZeiteintragRepository::ermittleKrankheitstagefuerQuartal(
+    $pdo,
+    $id,
+    $m['jahr'],
+    $m['quartal']
+);
+$quartalKrankSummeUser = array_sum($quartalKrankMapUser);
+
+    $globalQuartalSummen['stunden'] += (float)$m['quartalSummen']['stunden'];
+    $globalQuartalSummen['urlaub']  += (float)$m['quartalSummen']['urlaub'];
+    $globalQuartalSummen['krank']   += (float)$quartalKrankSummeUser;
+}
+
+
 // Welche ID ist selektiert? (GET param "id")
 $ausgewaehlte_id = isset($_GET['id']) && $_GET['id'] !== '' ? (int)$_GET['id'] : null;
 
 // Falls keine Auswahl getroffen wurde, den aktuellen Benutzer als Default verwenden
-if ($ausgewaehlte_id === null && $aktuellerBenutzerId !== null) {
-    $ausgewaehlte_id = $aktuellerBenutzerId;
+if ($ausgewaehlte_id === null && $benutzerId !== null) {
+    $ausgewaehlte_id = $benutzerId;
 }
 
 // Prüfen, ob der ausgewählte Benutzer existiert (falls eine ID vorhanden)
@@ -38,10 +74,9 @@ $gewaehlterBenutzerObj = null;
 if ($ausgewaehlte_id) {
     $gewaehlterBenutzerObj = new CBenutzer($ausgewaehlte_id);
     if (!$gewaehlterBenutzerObj->Load()) {
-        // Falls ungültig: zurück auf aktuellen Benutzer (falls vorhanden)
         $gewaehlterBenutzerObj = null;
-        if ($aktuellerBenutzerId !== null) {
-            $ausgewaehlte_id = $aktuellerBenutzerId;
+        if ($benutzerId !== null) {
+            $ausgewaehlte_id = $benutzerId;
             $gewaehlterBenutzerObj = new CBenutzer($ausgewaehlte_id);
             $gewaehlterBenutzerObj->Load();
         } else {
@@ -50,8 +85,6 @@ if ($ausgewaehlte_id) {
     }
 }
 
-// Datum für die Übersicht (heute)
-$heute = new DateTimeImmutable('today');
 $model = CStundenzettelRepository::monatsuebersichtQuartal($pdo, $ausgewaehlte_id, $heute);
 
 $jahr          = $model['jahr'];
@@ -122,6 +155,7 @@ $monatsnamen = [
 $aktuellerMonatJetzt = (int)$heute->format('n');
 $heuteSql            = $heute->format('Y-m-d');
 
+
 // Benutzeranzeige für Überschrift
 $gewaehlterName = $gewaehlterBenutzerObj
     ? ($gewaehlterBenutzerObj->GetVorname() . ' ' . $gewaehlterBenutzerObj->GetNachname() . ' ')
@@ -131,19 +165,39 @@ $gewaehlterName = $gewaehlterBenutzerObj
 <html lang="de"<?= html_modus_attribut() ?>>
 <head>
   <meta charset="utf-8">
-  <title>Monatsübersicht (Projektleitung)</title>
+  <title>Arbeitszeit & Urlaub erfassen</title>
   <link rel="stylesheet" href="aa_aussehen.css">
 </head>
 <body>
-<header class="page-header">
-  <h1>Monatsübersicht – Quartal <?= h((string)$quartal) ?>/<?= h((string)$jahr) ?> für <?= h($gewaehlterName) ?></h1>
+  <h1>Monatsübersicht – Quartal <?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></h1>
   <nav class="menu">
     <a class="btn" href="bb_route.php">Zurück zum Hauptmenü</a>
     <?= modus_navigation() ?>
   </nav>
-</header>
 
 <main>
+  <section class="quartal-block">
+    <h2>Quartalsübersicht – gesamt (alle Benutzer)</h2>
+    <table class="monatsuebersicht monatsuebersicht--compact">
+      <thead>
+        <tr>
+          <th>Quartal/Jahr</th>
+          <th>Stunden</th>
+          <th>Urlaubstage</th>
+          <th>Krank</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-summe-quartal">
+          <td>Q<?= h((string)$quartal) ?>/<?= h((string)$jahr) ?> – gesamt</td>
+          <td><?= h(number_format($globalQuartalSummen['stunden'], 2, ',', '.')) ?></td>
+          <td><?= h(number_format($globalQuartalSummen['urlaub'], 2, ',', '.')) ?></td>
+          <td><?= h(number_format($globalQuartalSummen['krank'], 2, ',', '.')) ?></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
   <section class="user-select">
     <form method="get" action="dd_monatsuebersicht_Projektleitung.php">
       <label for="benutzer_select">Benutzer anzeigen:</label>
@@ -161,7 +215,7 @@ $gewaehlterName = $gewaehlterBenutzerObj
   </section>
 
   <section class="quartal-block">
-    <h2>Quartalsübersicht</h2>
+    <h2>Quartalsübersicht – ausgewählter Benutzer</h2>
     <table class="monatsuebersicht monatsuebersicht--compact">
       <thead>
         <tr>
@@ -175,8 +229,8 @@ $gewaehlterName = $gewaehlterBenutzerObj
         <tr class="row-summe-quartal">
           <td>Q<?= h((string)$quartal) ?>/<?= h((string)$jahr) ?></td>
           <td><?= h(number_format($quartalSummen['stunden'], 2, ',', '.')) ?></td>
-          <td><?= h((string)$quartalSummen['urlaub']) ?></td>
-          <td><?= h((string)$quartalSummen['krank']) ?></td>
+          <td><?= h(number_format($quartalSummen['urlaub'], 2, ',', '.')) ?></td>
+          <td><?= h(number_format($quartalSummen['krank'], 2, ',', '.')) ?></td>
         </tr>
       </tbody>
     </table>
@@ -196,8 +250,7 @@ $gewaehlterName = $gewaehlterBenutzerObj
         ];
         $monatName = $monatsnamen[$monatNummer] ?? ('Monat ' . $monatNummer);
         $openAttr  = ($monatNummer === $aktuellerMonatJetzt) ? ' open' : '';
-        // Wenn krankProTag im Daten-Array vorhanden ist, verwenden; sonst neu laden
-        $krankProTag = $daten['krankProTag'] ?? CZeiteintragRepository::ermittleKrankheitstagefuerMonatsuebersicht(
+        $krankProTag = CZeiteintragRepository::ermittleKrankheitstagefuerMonatsuebersicht(
             $pdo,
             $ausgewaehlte_id,
             $monatNummer,
@@ -210,9 +263,9 @@ $gewaehlterName = $gewaehlterBenutzerObj
             <?= h($monatName) ?> <?= h((string)$jahr) ?>
           </span>
           <span class="month__summary-values">
-            <span><?= h(number_format($summe['stunden'], 2, ',', '.')) ?> h</span>
-            <span><?= h((string)$summe['urlaub']) ?> Urlaub</span>
-            <span><?= h((string)$summe['krank']) ?> Krank</span>
+          <span><?= h(number_format($summe['stunden'], 2, ',', '.')) ?> h</span>
+          <span><?= h(number_format($summe['urlaub'], 2, ',', '.')) ?> Urlaub</span>
+          <span><?= h(number_format($summe['krank'], 2, ',', '.')) ?> Krank</span>
           </span>
         </summary>
 
@@ -256,8 +309,8 @@ $gewaehlterName = $gewaehlterBenutzerObj
                     <?php endif; ?>
                   </td>
                   <td><?= h(number_format($werte['stunden'], 2, ',', '.')) ?></td>
-                  <td><?= h((string)$werte['urlaub']) ?></td>
-                  <td><?= h((string)$werte['krank']) ?></td>
+                  <td><?= h(number_format((float)$werte['urlaub'], 2, ',', '.')) ?></td>
+                  <td><?= h(number_format((float)$werte['krank'], 2, ',', '.')) ?></td>
                 </tr>
               <?php endforeach; ?>
               </tbody>
@@ -265,8 +318,8 @@ $gewaehlterName = $gewaehlterBenutzerObj
                 <tr class="row-summe-monat">
                   <th>Summe Monat</th>
                   <td><?= h(number_format($summe['stunden'], 2, ',', '.')) ?></td>
-                  <td><?= h((string)$summe['urlaub']) ?></td>
-                  <td><?= h((string)$summe['krank']) ?></td>
+                  <td><?= h(number_format($summe['urlaub'], 2, ',', '.')) ?></td>
+                  <td><?= h(number_format($summe['krank'], 2, ',', '.')) ?></td>
                 </tr>
               </tfoot>
             </table>

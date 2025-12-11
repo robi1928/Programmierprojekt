@@ -59,11 +59,16 @@ a{color:var(--akzent); text-decoration:none}
 a:hover{text-decoration:underline}
 
 /*Layout-Helfer*/
-.container{max-width:720px; margin:6vh auto; padding:0 20px}
+.container{
+  max-width: 720px;
+  margin: 6vh 0;
+  padding: 0 20px;
+}
+
 .header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px}
 
 @media (max-width:420px){
-  .container{margin:3vh auto}
+  .container{margin:3vh 0}
   .header{flex-direction:column; align-items:stretch}
 }
 
@@ -73,6 +78,22 @@ a:hover{text-decoration:underline}
   backdrop-filter:saturate(140%) blur(6px); -webkit-backdrop-filter:saturate(140%) blur(6px);
   border:1px solid var(--rahmen); border-radius:var(--radius); box-shadow:var(--schatten); padding:20px;
 }
+
+.card-narrow {
+    max-width: 480px;
+    margin: 1.5rem 0;
+}
+
+.actions-inline {
+    display: flex;
+    gap: 8px;
+}
+
+.actions-inline .btn {
+    flex: 1 1 0;
+    text-align: center;
+}
+
 /* Dark-Mode-Hintergrundvarianten */
 @media (prefers-color-scheme: dark){ :root:not([data-theme]) .card{background:rgba(17,24,39,.6)} }
 html[data-theme="dark"] .card{background:rgba(17,24,39,.6)}
@@ -80,6 +101,36 @@ html[data-theme="light"] .card{background:rgba(255,255,255,.7)}
 
 /* Formulare */
 .form{display:grid; gap:16px; gap:14px; max-width:420px}
+.form-inline {
+  max-width: 420px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.form-inline label {
+  flex: 0 0 auto;
+}
+
+.form-inline select {
+  flex: 1 1 auto;
+}
+
+.form-container {
+  max-width: 450px;
+  margin-left: 0;
+}
+
+/* Card innerhalb solcher Formulare links positionieren */
+.form-container .card {
+  margin-left: 0;
+}
+
+/* Buttons linksbündig */
+.actions-vertical.left {
+  align-items: flex-start;
+}
+
 .field{display:grid; gap:6px}
 label{font-weight:600}
 input, select {

@@ -131,6 +131,56 @@ final class CZeiteintragRepository {
         return $result;
     }
 
+    public static function ermittleKrankheitstagefuerQuartal(
+        PDO $pdo,
+        int $benutzerId,
+        int $jahr,
+        int $quartal
+    ): array {
+        if ($quartal < 1 || $quartal > 4) {
+            throw new InvalidArgumentException('Quartal muss zwischen 1 und 4 liegen.');
+        }
+
+        $monatStart = ($quartal - 1) * 3 + 1;    // 1, 4, 7, 10
+        $monatEnde  = $monatStart + 2;          // 3, 6, 9, 12
+
+        $sql = "
+            SELECT
+                s.monat AS monat,
+                z.tag   AS tag,
+                CASE
+                    WHEN SUM(CASE WHEN z.stunden = 0 THEN 1 ELSE 0 END) > 0
+                    THEN 1
+                    ELSE 0
+                END AS krank
+            FROM zeiteintraege z
+            JOIN stundenzettel s ON z.stundenzettel_id = s.stundenzettel_id
+            WHERE s.benutzer_id = :bid
+            AND s.jahr        = :jahr
+            AND s.monat BETWEEN :monatStart AND :monatEnde
+            GROUP BY s.monat, z.tag
+            ORDER BY s.monat, z.tag
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':bid'        => $benutzerId,
+            ':jahr'       => $jahr,
+            ':monatStart' => $monatStart,
+            ':monatEnde'  => $monatEnde,
+        ]);
+
+        $result = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $monat   = (int)$row['monat'];
+            $tagNum  = (int)$row['tag'];
+            $datum   = sprintf('%04d-%02d-%02d', $jahr, $monat, $tagNum);
+            $result[$datum] = (int)$row['krank']; // 0 oder 1
+        }
+
+        return $result;
+    }
+
 }
 
 class CErfassungVerarbeitung
@@ -189,8 +239,14 @@ class CErfassungVerarbeitung
     }
 
     // Komplettablauf: validieren, Stundenzettel sicherstellen, upsert, recalc. Rückgabe: stundenzettel_id
-    public static function erfasse(PDO $pdo, array $post, array $orte, int $benutzerId, string $maxDate): int
-    {
+    public static function erfasse(
+        PDO $pdo,
+        array $post,
+        array $orte,
+        int $zielBenutzerId,  // für wen gilt die Erfassung (Mitarbeiter)
+        int $einreicherId,    // wer erfasst/einreicht (Mitarbeiter oder TL/PL)
+        string $maxDate
+    ): void {
         [$datum, $status, $ortId, $stunden, $bemerkung] = self::validateInput($post, $orte, $maxDate);
 
         $d     = new DateTimeImmutable($datum);
@@ -200,7 +256,6 @@ class CErfassungVerarbeitung
 
         // Nur für Urlaub: optionales Enddatum einlesen
         $dEnd = null;
-        $urlaubTage = 0.0;
 
         if ($status === 'urlaub') {
             $datumEndeStr = trim($post['datum_ende'] ?? '');
@@ -215,43 +270,51 @@ class CErfassungVerarbeitung
                 if ($dEnd < $d) {
                     throw new RuntimeException('Enddatum darf nicht vor dem Startdatum liegen.');
                 }
-
-                $diff = $d->diff($dEnd);
-                $urlaubTage = (float)($diff->days + 1);   // inkl. Start- und Endtag
-            } else {
-                // kein Enddatum angegeben → 1 Tag Urlaub
-                $urlaubTage = 1.0;
-                $dEnd = null; // erzeugeGenehmigtenTag macht dann Start == Ende
             }
+            // Falls $datum_ende leer ist, bleibt $dEnd = null → erzeugeGenehmigtenTag macht Start==Ende
         }
 
         $pdo->beginTransaction();
         try {
-            // Stundenzettel finden/erstellen
-            $szId = CStundenzettelRepository::findeOderErstelle($pdo, $benutzerId, $monat, $jahr);
+            // Stundenzettel für den Mitarbeiter finden/erstellen
+            $szId = CStundenzettelRepository::findeOderErstelle(
+                $pdo,
+                $zielBenutzerId,
+                $monat,
+                $jahr
+            );
 
+            // NUR bei Arbeitstag/Krank einen Zeiteintrag anlegen
+            if ($status !== 'urlaub') {
+                CZeiteintragRepository::upsert(
+                    $pdo,
+                    $szId,
+                    $tag,
+                    $ortId,
+                    $stunden,
+                    $bemerkung
+                );
 
-            // Zeiteintrag speichern (auch bei Urlaub/Krank → 0 Stunden & Ort 0)
-            CZeiteintragRepository::upsert($pdo, $szId, $tag, $ortId, $stunden, $bemerkung);
-
-            // Ist-Stunden neu berechnen
-            CStundenzettelRepository::recalcIst($pdo, $szId);
+                // Ist-Stunden neu berechnen
+                CStundenzettelRepository::recalcIst($pdo, $szId);
+            }
 
             if ($status === 'urlaub') {
-                // Nur Urlaubsantrag anlegen – KEIN direktes Buchen mehr
+                // Urlaubsantrag anlegen – NICHT direkt Urlaub buchen
                 CUrlaubsantragRepository::erzeugeGenehmigtenTag(
                     $pdo,
-                    $benutzerId,
-                    $d,      // Startdatum
-                    $dEnd,   // kann null sein → Methode setzt Ende = Start
+                    $zielBenutzerId,  // Urlaub für diese Person
+                    $einreicherId,    // eingereicht von (aktueller Benutzer)
+                    $d,               // Startdatum
+                    $dEnd,            // kann null sein → Methode setzt Ende = Start
                     $bemerkung
                 );
             }
 
-            CStundenzettelRepository::reicheEin($pdo, $szId, $benutzerId);
+            // Falls du bei der Erfassung den Stundenzettel immer als eingereicht markieren willst:
+            CStundenzettelRepository::reicheEin($pdo, $szId, $einreicherId);
 
             $pdo->commit();
-            return $szId;
         } catch (Throwable $e) {
             $pdo->rollBack();
             throw $e;

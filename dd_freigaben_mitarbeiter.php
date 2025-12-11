@@ -140,7 +140,6 @@ $stmtUrlaubAbgelehnt = $pdo->prepare($sqlUrlaubAbgelehnt);
 $stmtUrlaubAbgelehnt->execute([':uid' => $aktuellerBenutzerId]);
 $abgelehnteUrlaube = $stmtUrlaubAbgelehnt->fetchAll(PDO::FETCH_ASSOC);
 
-
 ?>
 <!doctype html>
 <html lang="de"<?= html_modus_attribut() ?>>
@@ -158,9 +157,6 @@ $abgelehnteUrlaube = $stmtUrlaubAbgelehnt->fetchAll(PDO::FETCH_ASSOC);
  </header>
 
 <div class="container">
-    <header class="header">
-        <h1>Offene Freigaben für Sie</h1>
-    </header>
 
     <?php if ($meldungOk): ?>
         <div class="alert-ok">

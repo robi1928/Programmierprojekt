@@ -33,40 +33,117 @@ $vorgabe =  CVorgabenAuftraggeber::LoadByJahrQuartal($pdo, $jahr, $quartal);
     <a href="bb_ausloggen.php">Abmelden</a>
     <?= modus_navigation() ?>
   </nav>
-  <ul>
-    <!--Liste aller Geschäftsvorfälle, die ein Projektleiter ausführen darf-->
+  <main>
+    <div class="menu-links">
+      <a class="btn primary" href="dd_vorgaben_anlegen.php">Auftraggeber Vorgaben anlegen</a>  
+      <a class="btn primary" href="dd_nutzer_anlegen_projektleitung.php">Nutzer anlegen</a>
+      <a class="btn primary" href="dd_nutzer_aktualisieren_projektleitung.php">Nutzer aktualisieren</a>
+      <a class="btn primary" href="dd_erfassung_projektleitung.php">Arbeitszeit & Urlaub erfassen</a>
+      <a class="btn primary" href="dd_freigaben_projektleitung.php">Arbeitszeit & Urlaub freigeben</a>
+      <a class="btn primary" href="dd_monatsuebersicht_projektleitung.php">Monatsübersicht</a>
+    </div>
 
-<div class="menu-links">
-    <a class="btn primary" href="dd_vorgaben_anlegen.php">Auftraggeber Vorgaben anlegen</a>  
-    <a class="btn primary" href="dd_nutzer_anlegen_projektleitung.php">Nutzer anlegen</a>
-    <a class="btn primary" href="dd_nutzer_aktualisieren_projektleitung.php">Nutzer aktualisieren</a>
-    <a class="btn primary" href="dd_erfassung_projektleitung.php">Arbeitszeit erfassen</a>
-    <a class="btn primary" href="dd_freigaben_projektleitung.php">Arbeitszeiten freigeben</a>
-    <a class="btn primary" href="dd_monatsuebersicht_projektleitung.php">Monatsübersicht</a>
-  </div>
-    <br>
-  </ul>
+    <?php if ($vorgabe === null): ?>
+      <section class="monatsueberblick" aria-labelledby="quartal-ueberblick-title">
+        <h2 id="quartal-ueberblick-title">Quartalsüberblick</h2>
+        <p>Für dieses Quartal (<?= $quartal ?>/<?= $jahr ?>) liegen keine Vorgaben vor.</p>
+      </section>
+    <?php else: 
+        $toleranz = $vorgabe->Toleranzbereich();
+        $arbeitstageGesamt    = $vorgabe->berechneArbeitstageMitFeiertagen($jahr, $quartal);
+        $arbeitstageVergangen = $vorgabe->berechneVergangeneArbeitstageImQuartal($jahr, $quartal);
+        $anteilTage           = $vorgabe->prozentualeVergangeneArbeitstageImQuartal($jahr, $quartal);
+        $bedarf               = $vorgabe->BedarfPlanstundenBisEndeQuartal();
+    ?>
+      <section class="monatsueberblick" aria-labelledby="quartal-ueberblick-title">
+        <h2 id="quartal-ueberblick-title">Quartalsüberblick</h2>
 
-    <!--  Das sind die Anzeigen, die man zur Steuerung der Zeitplanung braucht. Die können „irgendwie sinnvoll“ angeordnet werden.-->
-    <!--Bei den Prozentzahlen dachte ich an zwei „Ladebalken“. Vielleicht ändert sich die Farbe vom IST, abhängig ob sie größer oder kleiner ist als der Zeitfortschritt.-->
-  <?php
-if ($vorgabe === null) {
-    echo "<p>Für dieses Quartal ($quartal/$jahr) liegen keine Vorgaben vor.</p>";
-} else {
-    echo "<p> Sollstunden (Quartal): " . $vorgabe->GetSollStunden() . "</p>";
-    echo "<p> Untergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['min'] . "</p>";
-    echo "<p> Obergrenze Toleranzbereich: " . $vorgabe->Toleranzbereich()['max'] . "</p>";
-    echo "<p> IstStunden (Quartal): " . $vorgabe->GetIstStunden() . "</p>";
-    echo "<p> Zielerreichung für Sollstunden: " . $vorgabe->GetAnteilIstStunden() . " %</p>"; //IstStunden / Sollstunden * 100 
-    echo "<p> Arbeitstage insgesamt: " . $vorgabe->berechneArbeitstageMitFeiertagen($jahr, $quartal) . "</p>";
-    echo "<p> Davon bereits vergangene Arbeitstage: " . $vorgabe->berechneVergangeneArbeitstageImQuartal($jahr, $quartal) . "</p>";
-    echo "<p> Anteil der bereits vergangenen Arbeitstage im Quartal: " . number_format($vorgabe->prozentualeVergangeneArbeitstageImQuartal($jahr, $quartal), 1, ',', '') . " %</p>";
-    echo "<p> Erforderliche Planstunden bis Quartalsende (Minimum): " . number_format($vorgabe->BedarfPlanstundenBisEndeQuartal()['bis_min'], 2, ',', '') . "</p>";
-    echo "<p> Erforderliche Planstunden bis Quartalsende (Maximum): " . number_format($vorgabe->BedarfPlanstundenBisEndeQuartal()['bis_max'], 2, ',', '') . "</p>";
+        <!-- Sollstunden & Toleranz -->
+        <article class="tile" aria-label="Sollstunden im Quartal">
+          <figure>
+            <div class="tile-icon">📊</div>
+            <figcaption>Sollstunden im Quartal</figcaption>
+          </figure>
 
-}
-?>
+          <p class="tile-value">
+            <output><?= $vorgabe->GetSollStunden() ?></output>
+            <span class="unit">Std</span>
+          </p>
+          <p class="tile-note">
+            Toleranzbereich:
+            <?= $toleranz['min'] ?>–<?= $toleranz['max'] ?> Std
+          </p>
+        </article>
 
-  <br>
-</body>
-</html>
+        <!-- Iststunden & Erfüllung der Sollstunden -->
+        <article class="tile" aria-label="Iststunden und Zielerreichung">
+          <figure>
+            <div class="tile-icon">⏱️</div>
+            <figcaption>Iststunden im Quartal</figcaption>
+          </figure>
+
+          <p class="tile-value">
+            <output><?= $vorgabe->GetIstStunden() ?></output>
+            <span class="unit">Std</span>
+          </p>
+
+          <p class="tile-note">
+            Zielerreichung:
+            <?= $vorgabe->GetAnteilIstStunden() ?> %
+          </p>
+
+          <meter
+            min="0"
+            max="100"
+            value="<?= $vorgabe->GetAnteilIstStunden() ?>"
+            aria-label="Prozentuale Zielerreichung der Sollstunden im Quartal">
+          </meter>
+        </article>
+
+        <!-- Zeitfortschritt im Quartal -->
+        <article class="tile" aria-label="Zeitfortschritt im Quartal">
+          <figure>
+            <div class="tile-icon">📅</div>
+            <figcaption>Zeitfortschritt im Quartal</figcaption>
+          </figure>
+
+          <p class="tile-value">
+            <output><?= $arbeitstageVergangen ?></output>
+            <span class="unit">von <?= $arbeitstageGesamt ?> Arbeitstagen</span>
+          </p>
+
+          <p class="tile-note">
+            <?= number_format($anteilTage, 1, ',', '') ?> % der Arbeitstage sind bereits vergangen.
+          </p>
+
+          <meter
+            min="0"
+            max="100"
+            value="<?= number_format($anteilTage, 1, '.', '') ?>"
+            aria-label="Anteil der bereits vergangenen Arbeitstage im Quartal">
+          </meter>
+        </article>
+
+        <!-- Erforderliche Planstunden bis Quartalsende -->
+        <article class="tile" aria-label="Erforderliche Planstunden bis Quartalsende">
+          <figure>
+            <div class="tile-icon">🧮</div>
+            <figcaption>Erforderliche Planstunden bis Quartalsende</figcaption>
+          </figure>
+
+          <p class="tile-value">
+            <span class="label">Minimum:</span>
+            <output><?= number_format($bedarf['bis_min'], 2, ',', '') ?></output>
+            <span class="unit">Std</span>
+          </p>
+
+          <p class="tile-value">
+            <span class="label">Maximum:</span>
+            <output><?= number_format($bedarf['bis_max'], 2, ',', '') ?></output>
+            <span class="unit">Std</span>
+          </p>
+        </article>
+
+      </section>
+    <?php endif; ?>
+  </main>

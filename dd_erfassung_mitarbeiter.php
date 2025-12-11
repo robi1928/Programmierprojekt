@@ -41,8 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Benutzerkontext fehlt. Bitte neu anmelden.');
         }
 
-        // erfasse() liefert die stundenzettel_id zurück
-        $szId = CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $benutzerId, $maxDate);
+        CErfassungVerarbeitung::erfasse($pdo, $_POST, $orte, $benutzerId, $benutzerId, $maxDate);
         $msg = 'Eintrag gespeichert.';
 
     } catch (Throwable $e) {
